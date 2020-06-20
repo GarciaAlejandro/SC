@@ -1,0 +1,2409 @@
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;*****************************************************************************************************
+                      00002 ;Programa que realice el envío de 10 bits mediante conexión inalambrica, uso del NRF24L01 con comunicaci
+                            ón
+                      00003 ;SPI.
+                      00004 ;***************************************************************************************************** 
+                      00005 #include "p18f4550.inc"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Nov 22 2017
+                      00005 ;  MPASM PIC18F4550 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2017 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      01765         LIST
+Warning[205]: Found directive in column 1. (LIST)
+                      00006 LIST p=18F4550
+                      00007 
+                      00008 ; CONFIG1L
+                      00009   CONFIG  PLLDIV = 1            ; PLL Prescaler Selection bits (No prescale (4 MHz oscillator input driv
+                            es PLL directly))
+                      00010   CONFIG  CPUDIV = OSC1_PLL2    ; System Clock Postscaler Selection bits ([Primary Oscillator Src: /1][9
+                            6 MHz PLL Src: /2])
+                      00011   CONFIG  USBDIV = 1            ; USB Clock Selection bit (used in Full-Speed USB mode only; UCFG:FSEN =
+                             1) (USB clock source comes directly from the primary oscillator block with no postscale)
+                      00012 
+                      00013 ; CONFIG1H
+                      00014   CONFIG  FOSC = INTOSC_HS      ; Oscillator Selection bits (Internal oscillator, HS oscillator used by 
+                            USB (INTHS))
+                      00015   CONFIG  FCMEN = OFF           ; Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled)
+                      00016   CONFIG  IESO = OFF            ; Internal/External Oscillator Switchover bit (Oscillator Switchover mod
+                            e disabled)
+                      00017 
+                      00018 ; CONFIG2L
+                      00019   CONFIG  PWRT = OFF            ; Power-up Timer Enable bit (PWRT disabled)
+                      00020   CONFIG  BOR = ON              ; Brown-out Reset Enable bits (Brown-out Reset enabled in hardware only 
+                            (SBOREN is disabled))
+                      00021   CONFIG  BORV = 3              ; Brown-out Reset Voltage bits (Minimum setting 2.05V)
+                      00022   CONFIG  VREGEN = OFF          ; USB Voltage Regulator Enable bit (USB voltage regulator disabled)
+                      00023 
+                      00024 ; CONFIG2H
+                      00025   CONFIG  WDT = OFF             ; Watchdog Timer Enable bit (WDT disabled (control is placed on the SWDT
+                            EN bit))
+                      00026   CONFIG  WDTPS = 32768         ; Watchdog Timer Postscale Select bits (1:32768)
+                      00027 
+                      00028 ; CONFIG3H
+                      00029   CONFIG  CCP2MX = ON           ; CCP2 MUX bit (CCP2 input/output is multiplexed with RC1)
+                      00030   CONFIG  PBADEN = ON           ; PORTB A/D Enable bit (PORTB<4:0> pins are configured as analog input c
+                            hannels on Reset)
+                      00031   CONFIG  LPT1OSC = OFF         ; Low-Power Timer 1 Oscillator Enable bit (Timer1 configured for higher 
+                            power operation)
+                      00032   CONFIG  MCLRE = OFF           ; MCLR Pin Enable bit (RE3 input pin enabled; MCLR pin disabled)
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00033 
+                      00034 ; CONFIG4L
+                      00035   CONFIG  STVREN = OFF          ; Stack Full/Underflow Reset Enable bit (Stack full/underflow will not c
+                            ause Reset)
+                      00036   CONFIG  LVP = OFF             ; Single-Supply ICSP Enable bit (Single-Supply ICSP disabled)
+                      00037   CONFIG  ICPRT = OFF           ; Dedicated In-Circuit Debug/Programming Port (ICPORT) Enable bit (ICPOR
+                            T disabled)
+                      00038   CONFIG  XINST = OFF           ; Extended Instruction Set Enable bit (Instruction set extension and Ind
+                            exed Addressing mode disabled (Legacy mode))
+                      00039 
+                      00040 ; CONFIG5L
+                      00041   CONFIG  CP0 = OFF             ; Code Protection bit (Block 0 (000800-001FFFh) is not code-protected)
+                      00042   CONFIG  CP1 = OFF             ; Code Protection bit (Block 1 (002000-003FFFh) is not code-protected)
+                      00043   CONFIG  CP2 = OFF             ; Code Protection bit (Block 2 (004000-005FFFh) is not code-protected)
+                      00044   CONFIG  CP3 = OFF             ; Code Protection bit (Block 3 (006000-007FFFh) is not code-protected)
+                      00045 
+                      00046 ; CONFIG5H
+                      00047   CONFIG  CPB = OFF             ; Boot Block Code Protection bit (Boot block (000000-0007FFh) is not cod
+                            e-protected)
+                      00048   CONFIG  CPD = OFF             ; Data EEPROM Code Protection bit (Data EEPROM is not code-protected)
+                      00049 
+                      00050 ; CONFIG6L
+                      00051   CONFIG  WRT0 = OFF            ; Write Protection bit (Block 0 (000800-001FFFh) is not write-protected)
+                      00052   CONFIG  WRT1 = OFF            ; Write Protection bit (Block 1 (002000-003FFFh) is not write-protected)
+                      00053   CONFIG  WRT2 = OFF            ; Write Protection bit (Block 2 (004000-005FFFh) is not write-protected)
+                      00054   CONFIG  WRT3 = OFF            ; Write Protection bit (Block 3 (006000-007FFFh) is not write-protected)
+                      00055 
+                      00056 ; CONFIG6H
+                      00057   CONFIG  WRTC = OFF            ; Configuration Register Write Protection bit (Configuration registers (
+                            300000-3000FFh) are not write-protected)
+                      00058   CONFIG  WRTB = OFF            ; Boot Block Write Protection bit (Boot block (000000-0007FFh) is not wr
+                            ite-protected)
+                      00059   CONFIG  WRTD = OFF            ; Data EEPROM Write Protection bit (Data EEPROM is not write-protected)
+                      00060 
+                      00061 ; CONFIG7L
+                      00062   CONFIG  EBTR0 = OFF           ; Table Read Protection bit (Block 0 (000800-001FFFh) is not protected f
+                            rom table reads executed in other blocks)
+                      00063   CONFIG  EBTR1 = OFF           ; Table Read Protection bit (Block 1 (002000-003FFFh) is not protected f
+                            rom table reads executed in other blocks)
+                      00064   CONFIG  EBTR2 = OFF           ; Table Read Protection bit (Block 2 (004000-005FFFh) is not protected f
+                            rom table reads executed in other blocks)
+                      00065   CONFIG  EBTR3 = OFF           ; Table Read Protection bit (Block 3 (006000-007FFFh) is not protected f
+                            rom table reads executed in other blocks)
+                      00066 
+                      00067 ; CONFIG7H
+                      00068   CONFIG  EBTRB = OFF           ; Boot Block Table Read Protection bit (Boot block (000000-0007FFh) is n
+                            ot protected from table reads executed in other blocks)
+                      00069 
+                      00070 ;------------------------------------------Separar Memoria---------------------------------------------;
+                      00071   UDATA_ACS
+Warning[207]: Found label after column 1. (data_to_send)
+000000                00072   data_to_send RES 1                        ; Reservamos un byte de memoria para enviar datos por SPI
+Warning[207]: Found label after column 1. (delay_min_tx)
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000001                00073   delay_min_tx RES 1                        ; Reservamos un byte de memoria para retardo minimo 
+Warning[207]: Found label after column 1. (delay_modo_tx)
+000002                00074   delay_modo_tx RES 1                       ; Reservamos un byte de memoria para retardo
+Warning[207]: Found label after column 1. (data_status)
+000003                00075   data_status RES 1                         ; Reservamos un byte de memoria para configuración del statu
+                            s
+Warning[207]: Found label after column 1. (data_configuration_C)
+000004                00076   data_configuration_C RES 1                ; Reservamos un byte de memoria para configuración del NRF24
+                            L01
+Warning[207]: Found label after column 1. (data_configuration_A)
+000005                00077   data_configuration_A RES 1                ; Reservamos un byte de memoria para configuración de memori
+                            a
+Warning[207]: Found label after column 1. (data_content)
+000006                00078   data_content RES 1                        ; Reservamos un byte de memoria para enviar datos comprimido
+                            s
+Warning[207]: Found label after column 1. (save_data)
+000007                00079   save_data RES 1                           ; Reservamos un byte de memoria para los datos retornados
+Warning[207]: Found label after column 1. (save_data_read)
+000008                00080   save_data_read RES 1                      ; Reservamos un byte de memoria para los datos retornados po
+                            r read
+Warning[207]: Found label after column 1. (contador_i)
+000009                00081   contador_i RES 2                          ; Reservamos dos byte de memoria para leer retorno de datos
+Warning[207]: Found label after column 1. (contador_j)
+00000B                00082   contador_j RES 1                          ; Reservamos un byte de memoria para leer retorno de datos
+Warning[207]: Found label after column 1. (result_operation_tx)
+00000C                00083   result_operation_tx RES 1                 ; Reservamos un byte de memoria para leer resultado de la op
+                            eración Tx
+Warning[207]: Found label after column 1. (read_status_config)
+00000D                00084   read_status_config RES 1                  ; Reservamos un byte de memoria para leer retorno de status
+Warning[207]: Found label after column 1. (trans_tx)
+00000E                00085   trans_tx RES 1                            ; Reservamos un byte de memoria para leer valores de retrans
+                            misión
+Warning[207]: Found label after column 1. (process_finished)
+00000F                00086   process_finished RES 1                    ; Reservamos un byte de memoria para verificar escritura de 
+                            datos
+Warning[207]: Found label after column 1. (register_address)
+000010                00087   register_address RES 1                    ; Reservamos un byte de memoria para registro de direcciones
+                             
+Warning[207]: Found label after column 1. (enable_checksum)
+000011                00088   enable_checksum RES 1                     ; Reservamos un byte de memoria para comprobar uso del check
+                            sum
+Warning[207]: Found label after column 1. (message_to_send)
+000012                00089   message_to_send RES 1                     ; Reservamos un byte de memoria para envíar el los datos que
+                             queremos transferir
+Warning[207]: Found label after column 1. (message)
+000013                00090   message RES 1                             ; Reservamos un byte de memoria para datos a envíar
+Warning[207]: Found label after column 1. (contador_tx)
+000014                00091   contador_tx RES 1                         ; Reservamos un byte de memoria para envío de datos
+                      00092  
+                      00093  ;---------------------------------------------Código---------------------------------------------------
+                            ;
+                      00094     CODE 0x00
+000000 EF?? F???      00095     GOTO Start                              ; Etiqueta Inicio
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00096         
+000004                00097 Start:
+                      00098     ;Configuración oscilador
+000004 50D3           00099     MOVF OSCCON, W, ACCESS                  ; Movemos OSCCON al registro W
+000006 0953           00100     IORLW b'01010011'                       ; Activamos oscilador interno, Usamos 2Mhz
+000008 6ED3           00101     MOVWF OSCCON, ACCESS                    ; Pasamos lo que está en el registro W a OSCCON
+                      00102     
+                      00103     ;Configuración para el ADC 
+                      00104     ;Configurar entrada analogica y Vref
+                      00105     ;Configurando puerto A como entrada  1=entrada, 0 = salida
+00000A 0E01           00106     MOVLW b'00000001'                       ; Se mueve el valor 0x01 al registro W
+00000C 6E92           00107     MOVWF TRISA                             ; Se mueve lo que está en el registro W a TRISA
+                      00108     
+                      00109     ;Configurar puerto D como salida
+00000E 6A95           00110     CLRF TRISD                              ; Ponemos cero en el TRISD
+                      00111     
+                      00112     ;Configurar voltaje de referencia
+000010 0E00           00113     MOVLW b'00000000'                       ; Se mueve el valor de 0x00 al registro W, para configurar V
+                            +=5v V-=0V
+000012 6EC1           00114     MOVWF ADCON1                            ; Se mueve lo que está en el registro W a ADCON1
+                      00115     
+                      00116     ;Seleccionar el canal A/D de entrada para leer
+000014 0E00           00117     MOVLW b'00000000'                       ; Se mueve el valor de 0x00 al registro W, para seleccionand
+                            o el canal 0
+000016 6EC2           00118     MOVWF ADCON0                            ; Se mueve lo que está en el registro W a ADCON0
+                      00119     
+                      00120     ;Seleccionar el tiempo de adquisicion
+                      00121     ;2Mhz 1/2Mhz=500 ns
+                      00122     ;2*500ns=1us 2Tosc*500ns = TAD   ADCS
+                      00123     ;4*TAD= 4us>2.45us               ACQT
+                      00124     ;Justificacion derecha
+000018 0E90           00125     MOVLW b'10010000'                       ; Se mueve el valor de 0x90 al registro W
+00001A 6EC0           00126     MOVWF ADCON2                            ; Se mueve lo que está en el registro W a ADCON2
+                      00127     
+                      00128     ;Encender el ADC
+00001C 0E01           00129     MOVLW b'00000001'                       ; Se mueve el valor de 0x01 al registro W, para habilitar AD
+                            C
+00001E 6EC2           00130     MOVWF ADCON0                            ; Se mueve lo que está en el registro W a ADCON0
+                      00131     
+000020 6A??           00132     CLRF contador_tx                        ; Limpiamos la dirección de memoria para envío de datos
+                      00133     
+                      00134     ; Configuración para el transmisor del NRF24L01
+000022 9000           00135     BCF ADON,0,ACCESS                       ; Deshabilitamos Conversor A/D
+000024 6A84           00136     CLRF PORTE                              ; Limpiamos el puerto E
+                      00137     
+000026                00138 LOOP:
+000026 EC?? F???      00139     CALL Start_SPI                          ; Llamamos a configuración del SPI
+00002A EC?? F???      00140     CALL Configuration_port                 ; LLamamos a configuración del NRF24L01
+00002E EC?? F???      00141     CALL Mode_Tx_configuration              ; Llamamos a configuración como modo Tx
+000032 EC?? F???      00142     CALL Convert_ADC                        ; Llamamos a la conversión del ADC
+                      00143     
+                      00144     
+                      00145     ;*************************************************************************************
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00146     ; Parte Alta:  ADRESH    se obtienen 2 bits
+                      00147     ; Parte Baja:  ADRESL    se obtienen 8 bits 
+                      00148     ;************************************************************************************
+000036 0E01           00149     MOVLW 0x01                              ; Movemos al registro W la cantidad de 0x01
+000038 6200           00150     CPFSEQ contador_tx,0                    ; Comparamos contador_tx = 0x01, si es así salta
+00003A EC?? F???      00151     CALL Send_part_low                      ; Si contador_tx = 0x00 entonces se va a la parte baja
+00003E EC?? F???      00152     CALL Send_part_high                     ; Si contador_tx = 0x01 entonces se va a la parte alta
+                      00153     
+000042                00154 message_send_rx:
+                      00155    
+000042 EC?? F???      00156     CALL Get_Mode_Tx                        ; Llamamos a la verificación de los datos que se transfirier
+                            on Tx
+000046 EC?? F???      00157     CALL Finish_operation                   ; Llamamos a deshabilitación de transferencia del NRF24L01
+                      00158     
+                      00159     ;Verificamos si el mensaje se ha enviado correctamente o no, de igual manera si hubo un fallo del NR
+                            F24L01
+00004A 5000           00160     MOVF trans_tx,W,ACCESS                  ; Movemos trans_tx al registro W
+00004C 0B03           00161     ANDLW b'00000011'                       ; Realizamos un AND con el registro W, para ver resultado
+00004E 6E00           00162     MOVWF trans_tx,ACCESS                   ; Pasamos lo que está en el registro W a trans_tx
+                      00163     
+                      00164     ;El mensaje fue envíado correctamente
+000050 0E01           00165     MOVLW 0x01                              ; Movemos al registro W la cantidad 0x01
+000052 6200           00166     CPFSEQ trans_tx,0                       ; Si trans_tx == 0x01, realizamos un salto...
+000054 EF?? F???      00167     GOTO Fail_message                       ; Si no es igual entonces debe ser mensaje fallido o error d
+                            e NRF24L01
+000058 EC?? F???      00168     CALL Sent_message                       ; En el caso que sea igual, entonces el mensaje se envío cor
+                            rectamente
+                      00169     
+00005C                00170 Fail_message:
+                      00171    
+                      00172     ;El mensaje fue envíado incorrectamente
+00005C 0E00           00173     MOVLW 0x00                              ; Movemos al registro W la cantidad 0x00
+00005E 6200           00174     CPFSEQ trans_tx,0                       ; Si trans_tx == 0x00, realizamos un salto...
+000060 EF?? F???      00175     GOTO Fail_NRF24L01                      ; Si no es igual entonces debe ser error de NRF24L01
+000064 EC?? F???      00176     CALL Not_sent_message                   ; En el caso que sea igual, entonces el mensaje no se envío 
+                            correctamente
+                      00177     
+000068                00178 Fail_NRF24L01:     
+                      00179     
+                      00180     ;Hubo un error en el NRF24L01
+000068 0E11           00181     MOVLW 0x11                              ; Movemos al registro W la cantidad 0x11
+00006A 6200           00182     CPFSEQ trans_tx,0                       ; Si trans_tx == 0x11, realizamos un salto...
+00006C EF?? F???      00183     GOTO Finish                             ; Si no es igual entonces es error de NRF24L01
+000070 EC?? F???      00184     CALL Not_sent_message                   ; En el caso que sea igual, entonces el mensaje no se envío 
+                            correctamente
+                      00185     
+000074                00186 Finish:    
+                      00187     
+000074 D???           00188     BRA LOOP
+                      00189 
+                      00190 ;-------------------------------------------Envío parte alta--------------------------------------------
+                            ----    
+000076                00191 Send_part_high:
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00192     
+000076 CFC4 F???      00193     MOVFF ADRESH , message                  ; Pasamos la parte alta del ADC hacia el mensaje que se quie
+                            re envíar en message
+00007A EC?? F???      00194     CALL Send_Data_TX_Mode_nRF24L01         ; Llamamos al envío de datos
+00007E 9000           00195     BCF contador_tx,0,ACCESS                ; Ponemos contador_tx = 0x00 para que se vaya a la parte baj
+                            a
+                      00196     
+000080 EF?? F???      00197     GOTO message_send_rx                    ; Regresamos a la etiqueta message_send_rx
+                      00198 
+                      00199 ;-------------------------------------------Envío parte baja--------------------------------------------
+                            ----    
+000084                00200 Send_part_low: 
+                      00201     
+000084 CFC3 F???      00202     MOVFF ADRESL , message                  ; Pasamos la parte baja del ADC hacia el mensaje que se quie
+                            re envíar en message
+000088 EC?? F???      00203     CALL Send_Data_TX_Mode_nRF24L01         ; Llamamos al envío de datos
+00008C 8000           00204     BSF contador_tx,0,ACCESS                ; Ponemos contador_tx = 0x01 para que se vaya a la parte alt
+                            a
+                      00205     
+00008E EF?? F???      00206     GOTO message_send_rx                    ; Regresamos a la etiqueta message_send_rx
+                      00207     
+                      00208 ;--------------------------------------------Conversión del ADC-----------------------------------------
+                            -------
+000092                00209 Convert_ADC:
+                      00210     ;Ponemos en marcha el ADC
+000092 0E03           00211     MOVLW       b'00000011'                 ; Movemos 0x03 al registro W
+000094 6EC2           00212     MOVWF       ADCON0                      ; Lo que está en el registro W lo pasamos a ADCON0
+000096 EC?? F???      00213     CALL Flag                               ; Llamamos a la subrutina Flag
+00009A 0012           00214     RETURN
+                      00215      
+                      00216     
+                      00217 ;-----------------------------------------Verificación del ADC------------------------------------------
+                            -----
+00009C                00218 Flag:
+00009C 0E03           00219     MOVLW       b'00000011'                 ; Verifica si el ADC sigue en marcha poniendo en el registro
+                             W, la cantidad de 0x03
+00009E 18C2           00220     XORWF       ADCON0, W                   ; Realizamos un XOR con lo que está en el registro W
+0000A0 B4D8           00221     BTFSC       STATUS, Z                   ; Verificamos si se levanto la bandera de ceros si Z=1 sigue
+                             en Flag
+0000A2 D???           00222     BRA         Flag                        ; Retornamos si Z = 1, regresamos a Flag
+0000A4 0012           00223     RETURN                                  ; En caso de Z = 0, retornamos 
+                      00224     
+                      00225 ;------------------------------------Si el mensaje se envío correctamente-------------------------------
+                            -------
+0000A6                00226 Sent_message:
+0000A6 808D           00227    BSF LATE,0,ACCESS                        ; Definimos el registro LATE pin 0 como que el mensaje se en
+                            vío correctamente
+                      00228    
+                      00229    ;Esperamos un tiempo para visualizar en led
+0000A8 5000           00230    MOVF delay_modo_tx, W, ACCESS            ; Movemos delay_modo_tx al registro W
+0000AA 0B1E           00231    ANDLW b'00011110'                        ; Realizamos una AND con el registro W, para designar tiempo
+0000AC 6E00           00232    MOVWF delay_modo_tx, ACCESS              ; Lo que esta en el registro W pasarlo a delay_modo_tx
+0000AE EC?? F???      00233    CALL Delay_min                           ; Esperamos un tiempo mínimo
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00234    
+0000B2 908D           00235    BCF LATE,0,ACCESS                        ; Desactivamos LATE pin 0 
+                      00236    
+0000B4 0012           00237    RETURN
+                      00238    
+                      00239 ;------------------------------------Si el mensaje no se envío correctamente----------------------------
+                            ----------
+0000B6                00240 Not_sent_message:
+0000B6 828D           00241    BSF LATE,1,ACCESS                      ; Definimos el registro LATE pin 1 como que el no mensaje se e
+                            nvío correctamente
+                      00242    
+                      00243    ;Esperamos un tiempo para visualizar en led
+0000B8 5000           00244    MOVF delay_modo_tx, W, ACCESS            ; Movemos delay_modo_tx al registro W
+0000BA 0B1E           00245    ANDLW b'00011110'                        ; Realizamos una AND con el registro W, para designar tiempo
+0000BC 6E00           00246    MOVWF delay_modo_tx, ACCESS              ; Lo que esta en el registro W pasarlo a delay_modo_tx
+0000BE EC?? F???      00247    CALL Delay_min                           ; Esperamos un tiempo mínimo
+                      00248    
+0000C2 928D           00249    BCF LATE,1,ACCESS                        ; Desactivamos LATE pin 1
+                      00250    
+0000C4 0012           00251    RETURN   
+                      00252  
+                      00253 ;---------------------------------------El NRF24L01 tuvo un error---------------------------------------
+                            -----
+0000C6                00254 Error_NRF24L01:
+0000C6 848D           00255    BSF LATE,2,ACCESS                      ; Definimos el registro LATE pin 2 como error del NRF24L01
+                      00256    
+                      00257    ;Esperamos un tiempo para visualizar en led
+0000C8 5000           00258    MOVF delay_modo_tx, W, ACCESS            ; Movemos delay_modo_tx al registro W
+0000CA 0B1E           00259    ANDLW b'00011110'                        ; Realizamos una AND con el registro W, para designar tiempo
+0000CC 6E00           00260    MOVWF delay_modo_tx, ACCESS              ; Lo que esta en el registro W pasarlo a delay_modo_tx
+0000CE EC?? F???      00261    CALL Delay_min                           ; Esperamos un tiempo mínimo
+                      00262    
+0000D2 948D           00263    BCF LATE,2,ACCESS                        ; Desactivamos LATE pin 2
+                      00264    
+0000D4 EF?? F???      00265    GOTO Finish                              ; Regresamos a subrutina Finish  
+                      00266    
+                      00267 ;-------------------------------------Configuración del SPI al Inicio-----------------------------------
+                            --
+0000D8                00268 Start_SPI:
+                      00269     ; Limpiamos puertos a utilizar
+0000D8 6A82           00270     CLRF PORTC                              ; Limpiamos puerto C
+0000DA 6A81           00271     CLRF PORTB                              ; Limpiasmo puerto B
+                      00272     
+                      00273     ;Configuración del SCK como salida en el puerto 1 y SDI(MISO) como entrada en el puerto 0
+0000DC 9293           00274     BCF TRISB,1,ACCESS                      ; Definimos el registro TRISB pin 1 como salida
+0000DE 8093           00275     BSF TRISB,0,ACCESS                      ; Definimos el registro TRISB pin 0 como entrada
+                      00276     
+                      00277     ;Configuración del SDO(MOSI) como salida en el puerto 7
+0000E0 9E94           00278     BCF TRISC,7,ACCESS                      ; Definimos el registro TRISC pin 7 como salida
+                      00279     
+                      00280     ;Configuración del Registro SSPCON1
+0000E2 50C6           00281     MOVF SSPCON1,W,ACCESS                   ; Movemos SSPCON1 al registro W
+0000E4 0BF0           00282     ANDLW b'11110000'                       ; Configuración de control del SPI con registro SSPBUF
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0000E6 6EC6           00283     MOVWF SSPCON1,ACCESS                            ; Pasamos lo que está en el registro W a SSPCON1
+                      00284     
+0000E8 50C6           00285     MOVF SSPCON1, W, ACCESS                 ; Movemos SSPCON1 al registro W
+0000EA 0902           00286     IORLW b'00000010'                       ; Iniciamos con una frecuencia base 
+0000EC 6EC6           00287     MOVWF SSPCON1, ACCESS                   ; Pasamos lo que está en el registro W a SSPCON1
+                      00288     
+                      00289     ;Configuración polaridad del reloj
+0000EE 98C6           00290     BCF SSPCON1,4,ACCESS                    ; El estado inactivo para el reloj es un nivel bajo
+                      00291       
+                      00292     ;Configuración del Registro SSPSTAT, realizar muestreo al final del tiempo de salida de datos por fl
+                            anco de bajada
+0000F0 8EC7           00293     BSF SSPSTAT,7,ACCESS                    ; Habilitamos muestreo por tiempo de salida de datos
+0000F2 8CC7           00294     BSF SSPSTAT,6,ACCESS                    ; Habilitamos flanco de bajada
+                      00295    
+                      00296     ;Configuración interrupción SPI en el registro PIE
+0000F4 969D           00297     BCF PIE1,3,ACCESS                       ; Ponemos el Registro PIE1 la deshabilitación de la interrup
+                            ción de MSSP
+                      00298       
+                      00299     ;Prioridad de interrupción SPI
+0000F6 969F           00300     BCF IPR1,3,ACCESS                       ; Ponemos el Registro IPR1 como baja prioridad
+                      00301    
+                      00302     ;Definir configuración del SPI
+0000F8 969E           00303     BCF PIR1,3,ACCESS                       ; Ponemos el Registro PIR1 en espera para transmitir o recib
+                            ir
+                      00304    
+                      00305     ;Habilitar Configuración SPI en el pin 5
+0000FA 8AC6           00306     BSF SSPCON1,5,ACCESS                    ; Habilita el puerto serie y configura SCK, SDO, SDI y SS
+                      00307    
+0000FC 0012           00308     RETURN                                  ; Retornamos
+                      00309     
+                      00310     
+                      00311 ;----------------------------------Configuración de los puertos SPI al Inicio---------------------------
+                            -----
+0000FE                00312 Configuration_port:
+                      00313     
+                      00314     ;Configuración de puertos como Digitales
+0000FE 50C1           00315     MOVF ADCON1, W, ACCESS                  ; Movemos ADCON1 al registro W
+000100 090F           00316     IORLW b'00001111'                       ; Realizamos una OR con el registro W y 00001111, para volve
+                            rlo digital
+000102 6EC1           00317     MOVWF ADCON1, ACCESS                    ; Lo que esta en el registro W pasarlo a ADCON1
+                      00318     
+                      00319     ;Configuración de CE, CSN e IRQ como salida
+000104 9493           00320     BCF TRISB,2,ACCESS                      ; Definimos el registro TRISB pin 2 como salida  (CE)
+000106 9693           00321     BCF TRISB,3,ACCESS                      ; Definimos el registro TRISB pin 3 como salida  (CSN)
+000108 8893           00322     BSF TRISB,4,ACCESS                      ; Definimos el registro TRISB pin 4 como entrada (IRQ)
+                      00323     
+                      00324     ;Inicializamos salida del SPI
+00010A 948A           00325     BCF LATB,2,ACCESS                       ; Inicializamos CE con 0
+00010C 868A           00326     BSF LATB,3,ACCESS                       ; Inicializamos CSN con 1
+                      00327     
+00010E 0012           00328     RETURN                                  ; Retornamos
+                      00329  
+                      00330     
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00331 ;-------------------------------------Finalizar tranferencia NRF24L01-----------------------------------
+                            -----      
+000110                00332 Finish_operation:
+                      00333     
+                      00334     ; Lea el registro general anterior para cambiar solo el bit PWR_UP
+000110 5000           00335     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000112 0B00           00336     ANDLW b'00000000'                       ; Realizamos una AND con el registro W, 
+000114 6E00           00337     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+000116 EC?? F???      00338     CALL Read_configuration                 ; Llamamos a la subrutina Read_configuration
+                      00339     
+                      00340     
+                      00341     ;Habilitar bit para habilitar transmisor como bajo
+                      00342     ;Accedemos a la dirección del registro general
+00011A 5000           00343     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+00011C 0B00           00344     ANDLW b'00000000'                       ; Realizamos una OR con el registro W, dirección para Modo R
+                            x
+00011E 6E00           00345     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00346     
+                      00347     ;Deshabilitamos el el transmisor
+000120 5000           00348     MOVF save_data_read, W, ACCESS          ; Movemos save_data_read al registro W
+000122 0BFD           00349     ANDLW b'11111101'                       ; Realizamos una OR con el registro W, habilitamos el Modo R
+                            x
+000124 6E00           00350     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+000126 EC?? F???      00351     CALL Write_configuration                ; Escribimos la configuración para reconocimiento Automático
+                      00352      
+00012A 0012           00353     RETURN
+                      00354     
+                      00355     
+                      00356 ;----------------------------------Configuración de Modo Tx del NRF24L01--------------------------------
+                            --------   
+00012C                00357 Mode_Tx_configuration:
+                      00358     
+00012C 948A           00359     BCF LATB,2,ACCESS                       ; Deshabilitamos CE con 0, para realizar configuración
+                      00360     
+00012E EC?? F???      00361     CALL Reset_configuration                ; Reseteamos la configuración de NRF24L01 en el caso que exi
+                            sta algo
+                      00362     
+                      00363     ;Habilitar reconocimiento Automático de Receptor
+                      00364     ;Accedemos a la dirección de reconocimiento Automático
+000132 5000           00365     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000134 0B01           00366     ANDLW b'00000001'                       ; Realizamos una AND con el registro W, dirección para Modo 
+                            Rx
+000136 6E00           00367     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00368     
+                      00369     ;Habilitamos el reconocimiento Automático
+000138 5000           00370     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00013A 0B3F           00371     ANDLW b'00111111'                       ; Realizamos una AND con el registro W, habilitamos el Modo 
+                            Rx
+00013C 6E00           00372     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                            C
+00013E EC?? F???      00373     CALL Write_configuration                ; Escribimos la configuración para reconocimiento Automático
+                      00374     
+                      00375     
+                      00376     ;Habilitar Receptor
+                      00377     ;Accedemos a la dirección de receptor
+000142 5000           00378     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000144 0B02           00379     ANDLW b'00000010'                       ; Realizamos una AND con el registro W, dirección para habil
+                            itar Rx
+000146 6E00           00380     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00381     
+                      00382     ;Habilitamos el reconocimiento Automático
+000148 5000           00383     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00014A 0B3F           00384     ANDLW b'00111111'                       ; Realizamos una AND con el registro W, habilitamos el Rx
+00014C 6E00           00385     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+00014E EC?? F???      00386     CALL Write_configuration                ; Escribimos la configuración para configuración de Receptor
+                      00387     
+                      00388     
+                      00389     ;Habilitamos ancho de dirección para transmisor y receptor
+                      00390     ;Accedemos a la dirección para habilitar el ancho de direcciones
+000152 5000           00391     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000154 0B03           00392     ANDLW b'00000011'                       ; Realizamos una AND con el registro W, dirección para ancho
+                             de FR
+000156 6E00           00393     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00394     
+                      00395     ;Ponemos como ancho de banda 5 bytes, para transmisor y receptor
+000158 5000           00396     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00015A 0B03           00397     ANDLW b'00000011'                       ; Realizamos una AND con el registro W, ponemos 5 bytes de a
+                            ncho de de direcciones
+00015C 6E00           00398     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+00015E EC?? F???      00399     CALL Write_configuration                ; Escribimos la configuración para ancho de direcciones
+                      00400     
+                      00401     
+                      00402     ;Configuramos retransmisión automática, contemplando tiempo de retraso y cantidad máxima de intentos
+                      00403     ;Accedemos a la dirección para retransmisión automática
+000162 5000           00404     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000164 0B04           00405     ANDLW b'00000100'                       ; Realizamos una AND con el registro W, dirección para retra
+                            nsmisión
+000166 6E00           00406     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00407     
+                      00408     ;Configuramos retraso automático
+000168 5000           00409     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00016A 0B00           00410     ANDLW b'00000000'                       ; Realizamos una AND con el registro W, y ponemos valor de r
+                            etraso automático
+00016C 0D10           00411     MULLW b'00010000'                       ; Multiplicamos con el registro W, para obtener el tiempo to
+                            tal de retraso
+00016E 0F0A           00412     ADDLW b'00001010'                       ; Adicionamos con el registro W, para determinar cantidad má
+                            xima de autotransmisión
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000170 6E00           00413     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+000172 EC?? F???      00414     CALL Write_configuration                ; Escribimos la configuración para retraso automático
+                      00415     
+                      00416     ;Definimos frecuencia Freq = 2400 + 64 = 2464
+                      00417     ;Accedemos a la dirección para anexar frecuencia
+000176 5000           00418     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000178 0B05           00419     ANDLW b'00000101'                       ; Realizamos una AND con el registro W, dirección para frecu
+                            encia
+00017A 6E00           00420     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00421     
+                      00422     ;Configuramos frecuencia, teniendo como base 2400. Anexamos 64 hz faltantes
+00017C 5000           00423     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00017E 0B40           00424     ANDLW b'01000000'                       ; Realizamos una AND con el registro W, y ponemos los 64 Hz
+000180 6E00           00425     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+000182 EC?? F???      00426     CALL Write_configuration                ; Escribimos la configuración para frecuencia a utilizar
+                      00427     
+                      00428     ;Configuración de velocidad de RF, potencia y ganancia de amplificador LNA
+                      00429     ;Accedemos a la dirección para configuración RF
+000186 5000           00430     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000188 0B06           00431     ANDLW b'00000110'                       ; Realizamos una AND con el registro W, dirección para frecu
+                            encia
+00018A 6E00           00432     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00433     
+                      00434     ;Configuramos velocidad de RF como 1 Mbps, potencia a 2.4GHz y ganancia
+00018C 5000           00435     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+00018E 0B00           00436     ANDLW b'00000000'                       ; Realizamos una AND con el registro W, para definir velocid
+                            ad de RF
+000190 0F06           00437     ADDLW b'00000110'                       ; Realizamos una ADD con el registro W, para determinar pote
+                            ncia máxima
+000192 0F01           00438     ADDLW b'00000001'                       ; Adicionamos con el registro W, la ganancia de CRC de detec
+                            ción de errores
+000194 6E00           00439     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+000196 EC?? F???      00440     CALL Write_configuration                ; Escribimos la configuración para transmisor y receptor (RF
+                            )
+                      00441     
+                      00442     ;Configuración de FIFO Rx y ancho de banda de checksum en caso de errores
+                      00443     ;Accedemos a la dirección para reservar FIFO Rx
+00019A 5000           00444     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+00019C 0B0B           00445     ANDLW b'00001011'                       ; Realizamos una AND con el registro W, dirección para FIFO 
+                            Rx
+00019E 6E00           00446     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00447     
+                      00448     ;Configuramos ancho de banda de checksum mediante payload de 8 bytes y habilitamos cheksum
+0001A0 5000           00449     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+0001A2 0B08           00450     ANDLW b'00001000'                       ; Realizamos una AND con el registro W, para definir ancho d
+                            e checksum
+0001A4 0F01           00451     ADDLW b'00000001'                       ; Adicionamos con el registro W, la habilitación de checksum
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0001A6 6E00           00452     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+0001A8 EC?? F???      00453     CALL Write_configuration                ; Escribimos la configuración para FIFO Rx y checksum
+                      00454     
+                      00455 
+                      00456     ;Configuración modo Tx habilitado y codificación CRC de 2 bytes para detección de errores
+                      00457     ;Accedemos a la dirección para configuración general
+0001AC 5000           00458     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+0001AE 0B00           00459     ANDLW b'00000000'                       ; Realizamos una AND con el registro W, dirección general
+0001B0 6E00           00460     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+                      00461     
+                      00462     ;Configuramos de modo Tx y habilitar detección de errores
+0001B2 5000           00463     MOVF data_configuration_C, W, ACCESS    ; Movemos data_configuration_C al registro W
+0001B4 0B08           00464     ANDLW b'00001000'                       ; Realizamos una AND con el registro W, para habilitar CRC
+0001B6 0F04           00465     ADDLW b'00000100'                       ; Adicionamos con el registro W, para determinar 2 bytes en 
+                            CRC
+0001B8 0F02           00466     ADDLW b'00000010'                       ; Adicionamos con el registro W, para poner POWER DOWN
+0001BA 0F00           00467     ADDLW b'00000000'                       ; Adicionamos con el registro W, para poner Modo Tx
+0001BC 6E00           00468     MOVWF data_configuration_C, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            C
+0001BE EC?? F???      00469     CALL Write_configuration                ; Escribimos la configuración para Modo Tx y detección de er
+                            rores
+                      00470     
+0001C2 5000           00471     MOVF delay_modo_tx, W, ACCESS           ; Movemos delay_modo_tx al registro W
+0001C4 0B32           00472     ANDLW b'00110010'                       ; Realizamos una AND con el registro W, para designar tiempo
+0001C6 6E00           00473     MOVWF delay_modo_tx, ACCESS             ; Lo que esta en el registro W pasarlo a delay_modo_tx
+0001C8 EC?? F???      00474     CALL Delay_min                          ; Esperamos un tiempo mínimo
+                      00475     
+                      00476     
+0001CC 0012           00477     RETURN
+                      00478    
+                      00479     
+                      00480 ;----------------------------------Obtener informe de status del NRF24L01-------------------------------
+                            ---------
+0001CE                00481 Get_Mode_Tx:   
+                      00482     
+                      00483    ; Inicializamos los contadores
+0001CE 5000           00484    MOVF contador_i, W, ACCESS               ; Movemos contador_i al registro W
+0001D0 0B00           00485    ANDLW b'00000000'                        ; Realizamos un AND con contador_i, para inicializar en 0
+0001D2 6E00           00486    MOVWF contador_i, ACCESS                 ; Lo que esta en el registro W pasarlo a contador_i
+                      00487    
+0001D4 5000           00488    MOVF contador_i+1, W, ACCESS             ; Movemos contador_i+1 al registro W
+0001D6 0B00           00489    ANDLW b'00000000'                        ; Realizamos un AND con contador_i+1, para inicializar en 0
+0001D8 6E00           00490    MOVWF contador_i+1, ACCESS               ; Lo que esta en el registro W pasarlo a contador_i+1
+                      00491    
+0001DA 5000           00492    MOVF contador_j, W, ACCESS               ; Movemos contador_j al registro W
+0001DC 0B00           00493    ANDLW b'00000000'                        ; Realizamos un AND con contador_j, para inicializar en 0
+0001DE 6E00           00494    MOVWF contador_j, ACCESS                 ; Lo que esta en el registro W pasarlo a contador_j
+                      00495    
+                      00496 ; Esperamos hasta que el número máximo de interrupciones de reintentos de TX o datos enviados TX FIFO
+                      00497 ; estén en alto y luego IRQ se establezca en bajo
+0001E0                00498 Wait_IRQ_LOW:
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00499     
+0001E0 0EFF           00500     MOVLW 0xFF                              ; Movemos al registro W 0xFF
+0001E2 6200           00501     CPFSEQ contador_i,0                     ; Si contador_i == 255, realiza un salto...
+0001E4 EC?? F???      00502     CALL Increment_i_1                      ; En el caso que no realice un salto se va a la subrutina In
+                            crement_i_1
+0001E8 EC?? F???      00503     CALL Increment_i_2                      ; En el caso que contador_i == 255, entonces saltamos a la s
+                            ubrutina Increment_i_2
+                      00504 
+0001EC                00505 Jump_cont:
+                      00506     ;Realizamos un total de 333 muestreos para la comprobación de que IRQ esté en bajo
+0001EC 0E4E           00507     MOVLW 0x4E                              ; Movemos al registro W 0x4E, el resto de datos para formar 
+                            014D
+0001EE 6200           00508     CPFSEQ contador_i+1,0                   ; Si contador_i == 78, realizamos un salto...
+0001F0 EF?? F???      00509     GOTO Jump_cont_2                        ; Si no es igual, salta hacia Jump_cont_2
+0001F4 EC?? F???      00510     CALL Increment_i_j                      ; Si es igual a 78 bits contador_i+1, entonces saltamos a la
+                             subrutina Increment_i_j 
+                      00511 
+0001F8                00512 Jump_cont_2:
+                      00513     ;Ponemos como limite 7 veces la cantidad de muestreos que se realizará 
+0001F8 0E07           00514     MOVLW 0x07                              ; Movemos al registro W 0x07
+0001FA 6200           00515     CPFSEQ contador_j,0                     ; Si contador_j == 7, realizamos un salto...
+0001FC EF?? F???      00516     GOTO Get_IRQ                            ; Si no es igual, salta hacia Get_IRQ
+000200 EC?? F???      00517     CALL Error_IRQ                          ; Si es igual entonces saltamos a la subrutina Error_IRQ
+                      00518     
+000204                00519 Get_IRQ:    
+                      00520      
+000204 5093           00521     MOVF TRISB, W, ACCESS                   ; Metemos entrada del TRIS B al registro W
+000206 0B00           00522     ANDLW b'00000000'                       ; Realizamos un AND con b'00000000' para verificar si el pin
+                             4, esta en bajo.
+000208 6293           00523     CPFSEQ TRISB,0                          ; Si TRISB está en alto salta..
+00020A D???           00524     BRA Wait_IRQ_LOW                        ; En caso contrario se repite y regresa a Wait_IRQ_LOW
+                      00525     
+                      00526     
+                      00527 ; Esperamos hasta que el número máximo de interrupciones de reintentos de TX o datos enviados TX al FIFO
+                             estén en alto
+00020C                00528 Wait_TX_DS_or_MAX_RT:
+                      00529     
+00020C EC?? F???      00530     CALL Read_status                        ; Llamamos la subrutina Read_status, para obtener status de 
+                            IRQ
+                      00531     
+                      00532     ;Comprobamos si el número máximo de interrupciones en Tx está en alto
+000210 5000           00533     MOVF read_status_config, W, ACCESS      ; Pasamos read_status_config al registro W
+000212 0B10           00534     ANDLW b'00010000'                       ; Realizamos un AND con el registro W, para saber si está el
+                             número máximo de interrupciones
+000214 6E00           00535     MOVWF read_status_config, ACCESS        ; Lo que esta en el registro W se pasa a read_status_config 
+                      00536     
+000216 0E10           00537     MOVLW   0x10                            ; Movemos al registro W 0x10
+000218 6200           00538     CPFSEQ read_status_config,0             ; En el caso que read_status_config == 0x10 entonces, salta.
+                            ..
+00021A EF?? F???      00539     GOTO Jump_status                        ; En el caso que no sean iguales se va Jump_status
+00021E EC?? F???      00540     CALL MAX_RT_status                      ; En caso de ser iguales, llamamos a la subrutina MAX_RT_sta
+                            tus
+                      00541     
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000222                00542 Jump_status:  
+                      00543     
+                      00544     ;Comprobamos los datos envíamos por Tx al FIFO si esta en alto
+000222 5000           00545     MOVF read_status_config, W, ACCESS      ; Pasamos read_status_config al registro W
+000224 0B20           00546     ANDLW b'00100000'                       ; Realizamos un AND con el registro W, para saber los datos 
+                            del FIFO en Tx
+000226 6E00           00547     MOVWF read_status_config, ACCESS        ; Lo que esta en el registro W se pasa a read_status_config 
+                      00548     
+000228 0E20           00549     MOVLW   0x20                            ; Movemos al registro W 0x20
+00022A 6200           00550     CPFSEQ read_status_config,0             ; En el caso que read_status_config == 0x20 entonces, salta.
+                            ..
+00022C EF?? F???      00551     GOTO Jump_status_2                      ; En el caso que no sean iguales se va Jump_status
+000230 EC?? F???      00552     CALL TX_DS_status                       ; En caso de ser iguales, llamamos a la subrutina TX_DS_stat
+                            us
+                      00553     
+000234                00554 Jump_status_2:    
+                      00555     
+000234 5093           00556     MOVF TRISB, W, ACCESS                   ; Metemos entrada del TRIS B al registro W
+000236 0B08           00557     ANDLW b'00001000'                       ; Realizamos un AND con b'00001000' para verificar si el pin
+                             4, no esta en bajo.
+000238 6293           00558     CPFSEQ TRISB,0                          ; Si TRISB está en alto salta..
+00023A D???           00559     BRA Wait_TX_DS_or_MAX_RT                ; En caso contrario se repite y regresa a Wait_TX_DS_or_MAX_
+                            RT
+                      00560  
+00023C                00561 Finish_status:    
+                      00562   
+00023C 0012           00563     RETURN
+                      00564     
+                      00565  
+                      00566 ;-----------------------------Incremento de contador_i, primeros 255 bits-------------------------------
+                            -----
+00023E                00567 Increment_i_1:
+00023E 2A00           00568     INCF contador_i,F,0                     ; Incrementa el contenido de la localidad de memoria contado
+                            r_i
+000240 EF?? F???      00569     GOTO Jump_cont                          ; Regresamos a Jump_cont
+                      00570 
+                      00571 ;-----------------------------Incremento de contador_i+1, primeros 78 bits------------------------------
+                            ------   
+000244                00572 Increment_i_2:
+000244 2A00           00573     INCF contador_i+1,F,0                   ; Incrementa el contenido de la localidad de memoria contado
+                            r_i+1
+000246 EF?? F???      00574     GOTO Jump_cont                          ; Regresamos a Jump_cont
+                      00575     
+                      00576 ;--------------------------Incremnto de contador_j y poner en cero contador_i---------------------------
+                            -----
+00024A                00577 Increment_i_j:
+                      00578     
+                      00579     ;Inicializamos contador_i y contador_i+1 con 0x00
+00024A 5000           00580     MOVF contador_i, W, ACCESS              ; Movemos contador_i al registro W
+00024C 0B00           00581     ANDLW b'00000000'                       ; Realizamos un AND con contador_i, para inicializar en 0
+00024E 6E00           00582     MOVWF contador_i, ACCESS                ; Lo que esta en el registro W pasarlo a contador_i
+                      00583    
+000250 5000           00584     MOVF contador_i+1, W, ACCESS                    ; Movemos contador_i+1 al registro W
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000252 0B00           00585     ANDLW b'00000000'                       ; Realizamos un AND con contador_i+1, para inicializar en 0
+000254 6E00           00586     MOVWF contador_i+1, ACCESS              ; Lo que esta en el registro W pasarlo a contador_i+1
+                      00587    
+000256 2A00           00588     INCF contador_j,F,0                     ; Incrementa el contenido de la localidad de memoria contado
+                            r_j
+000258 EF?? F???      00589     GOTO Jump_cont_2                        ; Regresamos a Jump_cont_2
+                      00590     
+                      00591 ;-------------------------------------Comprobamos el error de IRQ---------------------------------------
+                            -----    
+00025C                00592 Error_IRQ:
+                      00593     
+                      00594     ;Ponemos valor fijo en el caso que exista el error en IRQ
+00025C 5000           00595     MOVF result_operation_tx, W, ACCESS     ; Movemos result_operation_tx al registro W
+00025E 0B03           00596     ANDLW b'00000011'                       ; Realizamos una AND con el registro W, para poner fijo un v
+                            alor
+000260 6E00           00597     MOVWF result_operation_tx, ACCESS       ; Lo que esta en el registro W pasarlo a result_operation_tx
+                      00598   
+000262 C??? F???      00599     MOVFF result_operation_tx,trans_tx      ; Pasamos el resultado de Read_configuration a trans_tx
+                      00600     
+000266 EF?? F???      00601     GOTO Wait_TX_DS_or_MAX_RT               ; Regresamos a Wait_TX_DS_or_MAX_RT
+                      00602     
+                      00603     
+                      00604 ;-------------------------------------Se escribe para envíar datos--------------------------------------
+                            -----
+00026A                00605 Send_Data_TX_Mode_nRF24L01:
+                      00606     
+                      00607     ; Pasamos el mensaje que queremos envíar 
+00026A C??? F???      00608     MOVFF message,message_to_send           ; Movemos lo que está en message a message_to_send
+                      00609     
+                      00610     ;Definimos la dirección para transmitir
+00026E 0E10           00611     MOVLW 0x10                              ; Mover TX_ADDR a W en la direción de memoria register_addre
+                            ss
+000270 EC?? F???      00612     CALL Write_nrf_Address_Register         ; Llamamos la subrutina Write_nrf_Address_Register
+                      00613     
+                      00614     ;Definimos la dirección de recibir datos con la misma dirección para transmitir
+000274 0E0A           00615     MOVLW 0x0A                              ; Mover RX_ADDR_P0 a W en la dirección de de memoria registe
+                            r_address
+000276 EC?? F???      00616     CALL Write_nrf_Address_Register         ; Llamamos la subrutina Write_nrf_Address_Register
+                      00617     
+                      00618     ; Definimos enable_checksum como 1
+00027A 5000           00619     MOVF enable_checksum, W, ACCESS          ; Movemos enable_checksum al registro W
+00027C 0B01           00620     ANDLW b'00000001'                        ; Realizamos un AND con el registro W
+00027E 6E00           00621     MOVWF enable_checksum, ACCESS            ; Lo que está en el registro W lo pasamos a enable_checksum
+                      00622     
+                      00623     ; Envíamos los datos que deseamos
+000280 EC?? F???      00624     CALL Write_nrf_TX_Payload                ; LLamamos a la subrutina Write_nrf_Tx_Payload
+                      00625     
+000284 848A           00626     BSF LATB,2,ACCESS                        ; Habilitamos el CE con 1
+                      00627     
+                      00628     ;Esperamos un tiempo por habilitación del CE
+000286 5000           00629     MOVF delay_modo_tx, W, ACCESS           ; Movemos delay_modo_tx al registro W
+000288 0BC8           00630     ANDLW b'11001000'                       ; Realizamos una AND con el registro W, para designar tiempo
+00028A 6E00           00631     MOVWF delay_modo_tx, ACCESS             ; Lo que esta en el registro W pasarlo a delay_modo_tx
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00028C EC?? F???      00632     CALL Delay_min                          ; Esperamos un tiempo mínimo
+                      00633   
+000290 948A           00634     BCF LATB,2,ACCESS                        ; Desabilitamos el CE con 0
+                      00635     
+                      00636     ;Esperamos un tiempo por habilitación del CE
+000292 5000           00637     MOVF delay_modo_tx, W, ACCESS           ; Movemos delay_modo_tx al registro W
+000294 0B32           00638     ANDLW b'00110010'                       ; Realizamos una AND con el registro W, para designar tiempo
+000296 6E00           00639     MOVWF delay_modo_tx, ACCESS             ; Lo que esta en el registro W pasarlo a delay_modo_tx
+000298 EC?? F???      00640     CALL Delay_min                          ; Esperamos un tiempo mínimo
+                      00641     
+00029C 0012           00642     RETURN
+                      00643     
+                      00644 ;---------------------------------------Escritura del mensaje a envíar----------------------------------
+                            -----
+00029E                00645 Write_nrf_TX_Payload:
+                      00646    
+00029E 968A           00647     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00648     
+                      00649     ;Enviar palabra de instrucción mientras recibe status
+0002A0 0EA0           00650     MOVLW 0xA0                              ; Se almacena W_TX_PAYLOAD en W
+0002A2 6E00           00651     MOVWF data_to_send, ACCESS              ; Se copia W_TX_PAYLOAD a variable para enviar
+0002A4 EC?? F???      00652     CALL SPI_transfer                       ; Llamamos la subrutina SPI_transfer
+                      00653     
+0002A8 0E01           00654     MOVLW 0x01                              ; Pasamos al registro W, la cantidad de 0x01
+0002AA 6200           00655     CPFSEQ enable_checksum,0                ; verificamos si enable_checksum == 0x01
+0002AC EC?? F???      00656     CALL Checksum_fail                      ; Si es distinto el checksum no se está utilizando
+0002B0 EC?? F???      00657     CALL Checksum_no_fail                   ; Si es igual entonces, el checksum se esta utilizando
+                      00658     
+0002B4                00659 Finish_checksum:
+                      00660     
+0002B4 868A           00661     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00662     
+0002B6 0012           00663     RETURN
+                      00664     
+                      00665 ;-------------------------------------Cuando hay un error en el checksum--------------------------------
+                            -----;    
+0002B8                00666 Checksum_fail:
+                      00667     
+                      00668     ; Mensaje que se quiere envíar
+0002B8 C??? F???      00669     MOVFF message_to_send, data_to_send     ; Movemos los datos que queremos envíar a data_to_send
+0002BC 6E00           00670     MOVWF data_to_send, ACCESS              ; Se copia W_TX_PAYLOAD a variable para enviar
+0002BE EC?? F???      00671     CALL SPI_transfer                       ; Llamamos la subrutina SPI_transfer
+                      00672     
+0002C2 EF?? F???      00673     GOTO Finish_checksum
+                      00674     
+                      00675     
+                      00676 ;-------------------------------------Cuando no hay error en el checksum--------------------------------
+                            -----;    
+0002C6                00677 Checksum_no_fail:
+                      00678     
+                      00679     ; Mensaje que se quiere envíar
+0002C6 C??? F???      00680     MOVFF message_to_send, data_to_send     ; Movemos los datos que queremos envíar a data_to_send
+0002CA 6E00           00681     MOVWF data_to_send, ACCESS              ; Se copia W_TX_PAYLOAD a variable para enviar
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0002CC EC?? F???      00682     CALL SPI_transfer                       ; Llamamos la subrutina SPI_transfer
+                      00683     
+                      00684     ; Actualizamos resultado del mensaje
+0002D0 5000           00685     MOVF save_data, W, ACCESS               ; Pasamos byte para limpiar datos al registro W 
+0002D2 0F00           00686     ADDLW b'00000000'                       ; Se realiza una adición con el registro W, para limpiar men
+                            saje envíado
+0002D4 6E00           00687     MOVWF data_to_send, ACCESS              ; Pasamos lo que esta en el registro W a data_to_send
+0002D6 EC?? F???      00688     CALL SPI_transfer                       ; Llamamos la subrutina SPI_transfer
+                      00689     
+0002DA EF?? F???      00690     GOTO Finish_checksum   
+                      00691     
+                      00692     
+                      00693 ;---------------------------------Escribiendo en el registro de direcciones-----------------------------
+                            ----
+0002DE                00694 Write_nrf_Address_Register:
+                      00695     
+0002DE 6A??           00696     CLRF process_finished                   ; Se coloca en cero la variable que determina si ha terminad
+                            o el proceso (bandera)
+                      00697 
+                      00698 ; El proceso de escribir la dirección se repite hasta que se confirma
+0002E0                00699 Wait_write_address:
+                      00700     
+0002E0 968A           00701     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00702     
+                      00703     ;Escribimos en la dirección de registro una instrucción
+0002E2 0F20           00704     ADDLW b'00100000'                       ; Realizamos una ADD con el registro W y TX_ADDR (W_REGISTER
+                             + TX_ADDR)
+0002E4 6E00           00705     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+0002E6 6E00           00706     MOVWF register_address, ACCESS          ; Lo que esta en el registro W pasarlo a register_address
+0002E8 EC?? F???      00707     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00708     
+                      00709     ;Ponemos las dirección de transmisor y receptor
+0002EC 0EB2           00710     MOVLW 0xB2                              ; Dirección transmisión[1] se carga a W
+0002EE 6E00           00711     MOVWF data_to_send, ACCESS              ; Se almacena dir_trans[1] a data_to_send
+0002F0 EC?? F???      00712     CALL SPI_transfer                       ; Enviar dato[1]
+                      00713     
+                      00714     ;Iteración 2 
+0002F4 0EB2           00715     MOVLW 0xB2                              ; Dirección transmisión[1] se carga a W
+0002F6 6E00           00716     MOVWF data_to_send, ACCESS              ; Se almacena dir_trans[1] a data_to_send
+0002F8 EC?? F???      00717     CALL SPI_transfer                       ; Enviar dato[1
+                      00718     
+                      00719     ;Iteración 3 
+0002FC 0EB3           00720     MOVLW 0xB3                              ; Dirección transmisión[1] se carga a W
+0002FE 6E00           00721     MOVWF data_to_send, ACCESS              ; Se almacena dir_trans[1] a data_to_send
+000300 EC?? F???      00722     CALL SPI_transfer                       ; Enviar dato[1]
+                      00723     
+                      00724     ;Iteración 4 
+000304 0EB4           00725     MOVLW 0xB4                              ; Dirección transmisión[1] se carga a W
+000306 6E00           00726     MOVWF data_to_send, ACCESS              ; Se almacena dir_trans[1] a data_to_send
+000308 EC?? F???      00727     CALL SPI_transfer                       ; Enviar dato[1]
+                      00728     
+                      00729     ;Iteración 5
+00030C 0E01           00730     MOVLW 0x01                              ; Dirección transmisión[1] se carga a W
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00030E 6E00           00731     MOVWF data_to_send, ACCESS              ; Se almacena dir_trans[1] a data_to_send
+000310 EC?? F???      00732     CALL SPI_transfer                       ; Enviar dato[1]
+                      00733     
+000314 868A           00734     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00735 
+000316 EC?? F???      00736     CALL Read_nRF24L01_Address_Register     ; Verificamos direcciones 
+                      00737     
+00031A 8000           00738     BSF process_finished, 0, ACCESS         ; Ponemos 0x01 en process_finished
+                      00739     
+                      00740     ; Verificamos si es correcto la escritura
+00031C 5000           00741     MOVF save_data, W, ACCESS               ; Movemos save_data al registro W
+00031E 6200           00742     CPFSEQ data_to_send,0                   ; Comparamos data_to_send = save_data, si es igual salta...
+000320 6A??           00743     CLRF process_finished                   ; En el caso que sean distintos entonces se limpia process_f
+                            inished
+                      00744 
+                      00745     ;Verificamos proceso que sea bajo, ya que no se ha terminado la transferencia de datos
+000322 5000           00746     MOVF process_finished, W, ACCESS        ; Movemos process_finished al registro W
+000324 0900           00747     IORLW b'00000000'                       ; Realizamos una OR con el registro W, para verificar proces
+                            o
+000326 6E00           00748     MOVWF process_finished, ACCESS          ; Lo que esta en el registro W pasarlo a process_finished
+                      00749     
+000328 0E00           00750     MOVLW 0x00                              ; Movemos al registro W, la cantidad de 0x00
+00032A 6200           00751     CPFSEQ process_finished,0               ; Comparamos process_finished = 0x00, si es igual salta...
+00032C EF?? F???      00752     GOTO Exit_write                         ; En caso que sea distinto 
+000330 D???           00753     BRA Wait_write_address                  ; En caso que sea igual a cero
+                      00754     
+000332                00755 Exit_write:    
+                      00756     
+000332 0012           00757     RETURN
+                      00758     
+                      00759     
+                      00760 ;-----------------------------------Lectura de la dirección de registros--------------------------------
+                            ------    
+000334                00761 Read_nRF24L01_Address_Register:
+                      00762     
+000334 968A           00763     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00764     
+                      00765     ;Recibimos datos mientras se envían datos ficticios 
+000336 C??? F???      00766     MOVFF register_address, data_to_send    ; Movemos la dirección del registro a data_to_send
+00033A 0E00           00767     MOVLW 0x00                              ; Movemos 0x00 al registro W
+00033C 6E00           00768     MOVWF data_to_send, ACCESS              ; Pasamos lo que está en el registro W a data_to_send
+00033E EC?? F???      00769     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00770   
+000342 868A           00771     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo  
+                      00772     
+000344 0012           00773     RETURN
+                      00774     
+                      00775 ;------------------------------Verificamos si no existe errores en interrupciones-----------------------
+                            -----
+000346                00776 MAX_RT_status:
+                      00777     
+                      00778     ; Obtenemos el restablecimiento del contador de retransmisión después de cada nueva transmisión de p
+                            aquetes
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000346 5000           00779     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000348 0B08           00780     ANDLW b'00001000'                       ; Realizamos una AND con el registro W, verificamos Tx
+00034A 6E00           00781     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+00034C EC?? F???      00782     CALL Read_configuration                 ; Llamamos a la subrutina Read_configuration
+                      00783   
+000350 5000           00784     MOVF save_data_read, W, ACCESS          ; Movemos save_data_read al registro W
+000352 0B0F           00785     ANDLW b'00001111'                       ; Realizamos una AND con el registro W, verificamos Tx
+000354 0204           00786     MULWF b'00000100'                       ; Realizamos una Multiplicación para el restablecimiento
+000356 0F00           00787     ADDLW b'00000000'                       ; Realizamos una Adición con el registro W, para decir que l
+                            os datos no se envíaron correctamente
+000358 6E00           00788     MOVWF save_data_read, ACCESS            ; Lo que esta en el registro W pasarlo a save_data_read
+                      00789      
+00035A C??? F???      00790     MOVFF save_data_read,trans_tx           ; Pasamos el resultado de Read_configuration a trans_tx
+                      00791      
+                      00792     ; Borramos en status la verificación de Tx
+00035E 5000           00793     MOVF data_content, W, ACCESS            ; Movemos data_content al registro W
+000360 0B10           00794     ANDLW b'00010000'                       ; Realizamos una AND con el registro W, para borrar verifica
+                            ción de Tx
+000362 6E00           00795     MOVWF data_content, ACCESS              ; Lo que esta en el registro W pasarlo a data_content
+000364 EC?? F???      00796     CALL Write_status                       ; Llamamos a la subrutina Write_status
+                      00797     
+000368 EF?? F???      00798     GOTO Jump_status                        ; Regresamos a Jump_status
+                      00799     
+                      00800     
+                      00801 ;------------------------------Verificamos los datos se envían del Tx al FIFO---------------------------
+                            ------
+00036C                00802 TX_DS_status:
+                      00803     
+                      00804     ;Los datos se enviaron correctamente
+00036C 5000           00805     MOVF result_operation_tx, W, ACCESS     ; Movemos result_operation_tx al registro W
+00036E 0B01           00806     ANDLW b'00000001'                       ; Realizamos una AND con el registro W, para poner fijo un v
+                            alor
+000370 6E00           00807     MOVWF result_operation_tx, ACCESS       ; Lo que esta en el registro W pasarlo a result_operation_tx
+                      00808     
+                      00809     ; Obtenemos el restablecimiento del contador de retransmisión después de cada nueva transmisión de p
+                            aquetes
+000372 5000           00810     MOVF data_configuration_A, W, ACCESS    ; Movemos data_configuration_A al registro W
+000374 0B08           00811     ANDLW b'00001000'                       ; Realizamos una AND con el registro W, verificamos Tx
+000376 6E00           00812     MOVWF data_configuration_A, ACCESS      ; Lo que esta en el registro W pasarlo a data_configuration_
+                            A
+000378 EC?? F???      00813     CALL Read_configuration                 ; Llamamos a la subrutina Read_configuration
+                      00814   
+00037C 5000           00815     MOVF save_data_read, W, ACCESS          ; Movemos save_data_read al registro W
+00037E 0B0F           00816     ANDLW b'00001111'                       ; Realizamos una AND con el registro W, verificamos Tx
+000380 0204           00817     MULWF b'00000100'                       ; Realizamos una Multiplicación para el restablecimiento
+000382 0F01           00818     ADDLW b'00000001'                       ; Realizamos una Adición con el registro W, para decir que l
+                            os datos se envíaron correctamente
+000384 6E00           00819     MOVWF save_data_read, ACCESS            ; Lo que esta en el registro W pasarlo a save_data_read
+                      00820     
+000386 C??? F???      00821     MOVFF save_data_read,trans_tx           ; Pasamos el resultado de Read_configuration a trans_tx
+                      00822     
+                      00823    ; Borramos en status la verificación de paquetes en FIFO de Tx
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00038A 5000           00824     MOVF data_content, W, ACCESS            ; Movemos data_content al registro W
+00038C 0B20           00825     ANDLW b'00100000'                       ; Realizamos una AND con el registro W, para borrar verifica
+                            ción de Tx
+00038E 6E00           00826     MOVWF data_content, ACCESS              ; Lo que esta en el registro W pasarlo a data_content
+000390 EC?? F???      00827     CALL Write_status                       ; Llamamos a la subrutina Write_status
+                      00828     
+000394 EF?? F???      00829     GOTO Finish_status                      ; Regresamos a Finish_status
+                      00830     
+                      00831      
+                      00832 ;----------------------------------Verificamos el estatus de la lectura---------------------------------
+                            -----
+000398                00833 Read_status:
+                      00834     
+000398 968A           00835     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00836    
+                      00837     ;Enviar datos, sin instrucción para obtener estatus
+00039A 5000           00838     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+00039C 09FF           00839     IORLW b'11111111'                       ; Realizamos una OR con el registro W, para leer status
+00039E 6E00           00840     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+0003A0 EC?? F???      00841     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00842     
+0003A4 868A           00843     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00844     
+0003A6 C??? F???      00845     MOVFF save_data,read_status_config      ; Movemos el resultodo del status a read_status_config
+                      00846    
+0003AA 0012           00847     RETURN
+                      00848     
+                      00849 ;----------------------------------Reset de configuración de NRF24L01-----------------------------------
+                            -----
+0003AC                00850 Reset_configuration:   
+                      00851     
+0003AC 968A           00852     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00853     
+                      00854     ;Enviar datos del SSBUF mientras recibe estado de transferencia
+0003AE 5000           00855     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+0003B0 09E1           00856     IORLW b'11100001'                       ; Realizamos una OR con el registro W, para limpiar FIFO en 
+                            Tx
+0003B2 6E00           00857     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+0003B4 EC?? F???      00858     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00859     
+0003B8 868A           00860     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00861     
+0003BA 5000           00862     MOVF delay_modo_tx, W, ACCESS           ; Movemos delay_modo_tx al registro W
+0003BC 0905           00863     IORLW b'00000101'                       ; Realizamos una OR con el registro W, para designar tiempo
+0003BE 6E00           00864     MOVWF delay_modo_tx, ACCESS             ; Lo que esta en el registro W pasarlo a delay_modo_tx
+0003C0 EC?? F???      00865     CALL Delay_min                          ; Esperamos un tiempo mínimo
+                      00866     
+0003C4 968A           00867     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00868     
+                      00869     ;Recibir datos del SSBUF mientras esta transfiriendo
+0003C6 5000           00870     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+0003C8 09E2           00871     IORLW b'11100010'                       ; Realizamos una OR con el registro W, para limpiar FIFO en 
+                            Rx
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0003CA 6E00           00872     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+0003CC EC?? F???      00873     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00874     
+0003D0 868A           00875     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00876     
+                      00877     ;En la configuración del Status para saber si llegan nuevos datos, eliminamos el estatus RX_DR
+0003D2 5000           00878     MOVF data_content,  W, ACCESS           ; Movemos data_content al registro W
+0003D4 0940           00879     IORLW b'01000000'                       ; Realizamos una OR con el registro W, para limpiar estatus 
+                            RX_DR
+0003D6 6E00           00880     MOVWF data_content, ACCESS              ; Lo que esta en el registro W pasarlo a data_content
+0003D8 EC?? F???      00881     CALL Write_status                       ; Realizamos escritura en status
+                      00882    
+                      00883     ;En la configuración del Status para saber si los datos se envían, eliminamos el estatus TX_DR
+0003DC 5000           00884     MOVF data_content,  W, ACCESS           ; Movemos data_content al registro W
+0003DE 0920           00885     IORLW b'00100000'                       ; Realizamos una OR con el registro W, para limpiar estatus 
+                            TX_DR
+0003E0 6E00           00886     MOVWF data_content, ACCESS              ; Lo que esta en el registro W pasarlo a data_content
+0003E2 EC?? F???      00887     CALL Write_status                       ; Realizamos escritura en status
+                      00888     
+                      00889    ;En la número de veces del Status para reintentar envíos, eliminamos el estatus MAX_RT
+0003E6 5000           00890     MOVF data_content,  W, ACCESS           ; Movemos data_content al registro W
+0003E8 0910           00891     IORLW b'00010000'                       ; Realizamos una OR con el registro W, para limpiar estatus 
+                            MAX_RT
+0003EA 6E00           00892     MOVWF data_content, ACCESS              ; Lo que esta en el registro W pasarlo a data_content
+0003EC EC?? F???      00893     CALL Write_status                       ; Realizamos escritura en status
+                      00894        
+0003F0 0012           00895     RETURN
+                      00896 
+                      00897 ;----------------------------------Escribiendo datos en configuración-----------------------------------
+                            -----
+0003F2                00898 Write_configuration:
+                      00899     
+0003F2 968A           00900     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00901     
+                      00902     ;Enviar datos por words para configuración
+0003F4 C??? F???      00903     MOVFF data_configuration_A,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+                            ation_A a data_to_send
+                      00904      
+                      00905     ;Enviamos la word mientras se recibe el estatus
+0003F8 5000           00906     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+0003FA 0F20           00907     ADDLW b'00100000'                       ; Realizamos una ADD con el registro W, para escribir.
+0003FC 6E00           00908     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+0003FE EC?? F???      00909     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00910     
+                      00911     ;Enviar datos por words para memoria
+000402 C??? F???      00912     MOVFF data_configuration_C,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+                            ation_C a data_to_send
+000406 EC?? F???      00913     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01 
+                      00914 
+00040A 868A           00915     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00916      
+                      00917     ;Enviar datos por words para memoria
+00040C C??? F???      00918     MOVFF data_configuration_A,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                            ation_A a data_to_send
+000410 EC?? F???      00919     CALL Read_configuration                 ; Realizamos lectura de transferencia 
+                      00920     
+                      00921 ;Configuramos la transferencia de datos y verificamos que los datos se enviaron bien
+000414                00922 Wait_transfer_write:
+                      00923     
+000414 968A           00924     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00925     
+                      00926     ;Enviar datos por words para configuración
+000416 C??? F???      00927     MOVFF data_configuration_A,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+                            ation_A a data_to_send
+                      00928      
+                      00929     ;Enviamos la word mientras se recibe el estatus
+00041A 5000           00930     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+00041C 0F20           00931     ADDLW b'00100000'                       ; Realizamos una ADD con el registro W, para escribir.
+00041E 6E00           00932     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+000420 EC?? F???      00933     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01 
+                      00934     
+                      00935     ;Enviar datos por words para memoria
+000424 C??? F???      00936     MOVFF data_configuration_C,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+                            ation_C a data_to_send
+000428 EC?? F???      00937     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01 
+                      00938  
+00042C 868A           00939     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00940     
+00042E 5000           00941     MOVF save_data_read, W, ACCESS          ; Movemos save_data_read al registro W, sin perder el dato
+000430 6200           00942     CPFSEQ data_configuration_C,0           ; Comparamos retorno de save_data_read  con data_configurati
+                            on_C
+000432 D???           00943     BRA Wait_transfer_write
+                      00944    
+000434 0012           00945     RETURN
+                      00946     
+                      00947 ;----------------------------------Lectura datos de configuración---------------------------------------
+                            -----
+000436                00948 Read_configuration:
+                      00949     
+000436 968A           00950     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00951     
+                      00952     ;Enviar datos por words para configuración
+000438 C??? F???      00953     MOVFF data_configuration_A,data_to_send ; Pasamos los datos de la dirección de memoria data_configur
+                            ation_A a data_to_send
+                      00954      
+                      00955     ;Enviar instrucción de lectura 
+00043C 5000           00956     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+00043E 0F00           00957     ADDLW b'00000000'                       ; Realizamos una ADD con el registro W, para leer.
+000440 6E00           00958     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+000442 EC?? F???      00959     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00960     
+                      00961     ;Recibir datos mientras se envía datos ficticios 
+000446 5000           00962     MOVF data_to_send, W, ACCESS            ; Movemos data_to_send al registro W
+000448 0900           00963     IORLW b'00000000'                       ; Realizamos una ADD con el registro W, para leer.
+00044A 6E00           00964     MOVWF data_to_send, ACCESS              ; Lo que esta en el registro W pasarlo a data_to_send
+00044C EC?? F???      00965     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 23
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00966     
+000450 868A           00967     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00968     
+000452 C??? F???      00969     MOVFF save_data,save_data_read
+                      00970     
+000456 0012           00971     RETURN
+                      00972     
+                      00973 ;----------------------------------Escribiendo datos en el estatus--------------------------------------
+                            -----
+000458                00974 Write_status:
+                      00975     
+000458 968A           00976     BCF LATB,3,ACCESS                       ; Ponemos a CSN en 0 para activarlo
+                      00977     
+                      00978     ;Enviamos la word mientras se recibe el estatus
+00045A 5000           00979     MOVF data_status, W, ACCESS             ; Movemos data_status al registro W
+00045C 0F20           00980     ADDLW b'00100000'                       ; Realizamos una ADD con el registro W, para escribir.
+00045E 6E00           00981     MOVWF data_status, ACCESS               ; Lo que esta en el registro W pasarlo a data_status
+                      00982     
+000460 5000           00983     MOVF data_status, W, ACCESS             ; Movemos data_status al registro W
+000462 0F07           00984     ADDLW b'00000111'                       ; Realizamos una ADD con el registro W, para el registro de 
+                            STATUS
+000464 6E00           00985     MOVWF data_status, ACCESS               ; Lo que esta en el registro W pasarlo a data_status
+                      00986     
+                      00987     ;Enviar datos por words
+000466 C??? F???      00988     MOVFF data_content,data_to_send         ; Pasamos los datos de la dirección de memoria data_content 
+                            a data_to_send
+00046A EC?? F???      00989     CALL SPI_transfer                       ; Realizamos transferencia hacia el NRF24L01
+                      00990     
+00046E 868A           00991     BSF LATB,3,ACCESS                       ; Ponemos a CSN en 1 para desactivarlo
+                      00992   
+000470 0012           00993     RETURN
+                      00994         
+                      00995 ;----------------------------------Configuración la transferencia de datos------------------------------
+                            ------
+000472                00996 SPI_transfer:
+                      00997     
+                      00998     ;Configuración de la tranferencia de datos
+000472 C??? FFC9      00999     MOVFF data_to_send,SSPBUF               ; Pasamos los datos a tranferiar al Registro SSPBUF
+                      01000     
+000476                01001 Wait_transfer:
+                      01002     ;Verificar si se acompleto la transferencia
+000476 0E00           01003     MOVLW 0x00                              ; Movemos 0x00 al registro W
+000478 629E           01004     CPFSEQ PIR1,0                           ; Comparamos PIR1 = 0, entonces salta
+00047A D???           01005     BRA Wait_transfer                       ; Repetir hasta que la transferencia se complete
+                      01006     
+                      01007     ;Limpiamos bandera de la interrupción del SPI
+00047C 969E           01008     BCF PIR1,3,ACCESS                       ; Ponemos el Registro PIR1 y bajamos bandera
+                      01009    
+                      01010     ;Obtenemos los datos del registro y lo guardamos
+00047E CFC9 F???      01011     MOVFF SSPBUF,save_data                  ; Pasamos los datos del Registro SSPBUF a la dirección de me
+                            moria save_data
+                      01012    
+000482 0012           01013     RETURN
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 24
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01014     
+                      01015 ;----------------------------Subrutina para el cambio entre displays-----------------------------------;
+000484                01016 Delay_min:
+000484 5000           01017     MOVF delay_modo_tx, W, ACCESS           ; Movemos delay_modo_tx al registro W
+000486 6E??           01018     MOVWF delay_min_tx                      ; Pasamos lo que está en el registro W a delay_min_tx
+000488                01019 Wait_delay_min:
+000488 2E00           01020     DECFSZ delay_min_tx,1,0                 ; Decrementamos hasta que delay_min_tx sea igual a cero,ento
+                            nces salta...
+00048A D???           01021     BRA Wait_delay_min                      ; Si delay_min_tx no es cero entonces regresamos a Wait_dela
+                            y_min
+00048C 0012           01022     RETURN                                  ; Retornar
+                      01023     
+                      01024     
+                      01025     
+                      01026     
+                      01027    END
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+A                                 00000000
+ABDEN                             00000000
+ABDOVF                            00000007
+ACCESS                            00000000
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ACQT0                             00000003
+ACQT1                             00000004
+ACQT2                             00000005
+ACTVIE                            00000002
+ACTVIF                            00000002
+ADCON0                            00000FC2
+ADCON1                            00000FC1
+ADCON2                            00000FC0
+ADCS0                             00000000
+ADCS1                             00000001
+ADCS2                             00000002
+ADDEN                             00000003
+ADDR0                             00000000
+ADDR1                             00000001
+ADDR2                             00000002
+ADDR3                             00000003
+ADDR4                             00000004
+ADDR5                             00000005
+ADDR6                             00000006
+ADEN                              00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADIP                              00000006
+ADON                              00000000
+ADRES                             00000FC3
+ADRESH                            00000FC4
+ADRESL                            00000FC3
+AN0                               00000000
+AN1                               00000001
+AN2                               00000002
+AN3                               00000003
+AN4                               00000005
+BANKED                            00000001
+BAUDCON                           00000FB8
+BAUDCTL                           00000FB8
+BCLIE                             00000003
+BCLIF                             00000003
+BCLIP                             00000003
+BF                                00000000
+BGST                              00000005
+BOR                               00000000
+BRG16                             00000003
+BRGH                              00000002
+BSR                               00000FE0
+BTOEE                             00000004
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 26
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BTOEF                             00000004
+BTSEE                             00000007
+BTSEF                             00000007
+C                                 00000000
+C1INV                             00000004
+C1OUT                             00000006
+C2INV                             00000005
+C2OUT                             00000007
+CCP1                              00000002
+CCP1AS                            00000FB6
+CCP1CON                           00000FBD
+CCP1DEL                           00000FB7
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1IP                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP2CON                           00000FBA
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2IP                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCPR1                             00000FBE
+CCPR1H                            00000FBF
+CCPR1L                            00000FBE
+CCPR2                             00000FBB
+CCPR2H                            00000FBC
+CCPR2L                            00000FBB
+CFGS                              00000006
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CIS                               00000003
+CK                                00000006
+CK1SPP                            00000000
+CK2SPP                            00000001
+CKE                               00000006
+CKP                               00000004
+CLK1EN                            00000004
+CLKCFG0                           00000006
+CLKCFG1                           00000007
+CM0                               00000000
+CM1                               00000001
+CM2                               00000002
+CMCON                             00000FB4
+CMIE                              00000006
+CMIF                              00000006
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 27
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CMIP                              00000006
+CRC16EE                           00000002
+CRC16EF                           00000002
+CRC5EE                            00000001
+CRC5EF                            00000001
+CREN                              00000004
+CSEN                              00000005
+CSRC                              00000007
+CVR0                              00000000
+CVR1                              00000001
+CVR2                              00000002
+CVR3                              00000003
+CVRCON                            00000FB5
+CVREF                             00000004
+CVREN                             00000007
+CVROE                             00000006
+CVRR                              00000005
+CVRSS                             00000004
+Checksum_fail                     000002B8
+Checksum_no_fail                  000002C6
+Configuration_port                000000FE
+Convert_ADC                       00000092
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DDRA                              TRISA
+DDRB                              TRISB
+DDRC                              TRISC
+DDRD                              TRISD
+DDRE                              TRISE
+DFN8EE                            00000003
+DFN8EF                            00000003
+DIR                               00000002
+DONE                              00000001
+D_A                               00000005
+D_NOT_A                           00000005
+Delay_min                         00000484
+ECCP1AS                           00000FB6
+ECCP1CON                          00000FBD
+ECCP1DEL                          00000FB7
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             00000FA9
+EECON1                            00000FA6
+EECON2                            00000FA7
+EEDATA                            00000FA8
+EEIE                              00000004
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 28
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+EEIF                              00000004
+EEIP                              00000004
+EEPGD                             00000007
+ENDP0                             00000003
+ENDP1                             00000004
+ENDP2                             00000005
+ENDP3                             00000006
+EPCONDIS                          00000003
+EPHSHK                            00000004
+EPINEN                            00000001
+EPOUTEN                           00000002
+EPSTALL                           00000000
+Error_IRQ                         0000025C
+Error_NRF24L01                    000000C6
+Exit_write                        00000332
+FAST                              00000001
+FERR                              00000002
+FLTS                              00000002
+FREE                              00000004
+FRM0                              00000000
+FRM1                              00000001
+FRM10                             00000002
+FRM2                              00000002
+FRM3                              00000003
+FRM4                              00000004
+FRM5                              00000005
+FRM6                              00000006
+FRM7                              00000007
+FRM8                              00000000
+FRM9                              00000001
+FSEN                              00000002
+FSR0                              00000000
+FSR0H                             00000FEA
+FSR0L                             00000FE9
+FSR1                              00000001
+FSR1H                             00000FE2
+FSR1L                             00000FE1
+FSR2                              00000002
+FSR2H                             00000FDA
+FSR2L                             00000FD9
+Fail_NRF24L01                     00000068
+Fail_message                      0000005C
+Finish                            00000074
+Finish_checksum                   000002B4
+Finish_operation                  00000110
+Finish_status                     0000023C
+Flag                              0000009C
+GCEN                              00000007
+GIE                               00000007
+GIEH                              00000007
+GIEL                              00000006
+GIE_GIEH                          00000007
+GO                                00000001
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 29
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+Get_IRQ                           00000204
+Get_Mode_Tx                       000001CE
+HLVDCON                           00000FD2
+HLVDEN                            00000004
+HLVDIE                            00000002
+HLVDIF                            00000002
+HLVDIN                            00000005
+HLVDIP                            00000002
+HLVDL0                            00000000
+HLVDL1                            00000001
+HLVDL2                            00000002
+HLVDL3                            00000003
+I2C_DAT                           00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+IDLEIE                            00000004
+IDLEIF                            00000004
+IDLEN                             00000007
+INDF0                             00000FEF
+INDF1                             00000FE7
+INDF2                             00000FDF
+INT0                              00000000
+INT0E                             00000004
+INT0F                             00000001
+INT0IE                            00000004
+INT0IF                            00000001
+INT1                              00000001
+INT1E                             00000003
+INT1F                             00000000
+INT1IE                            00000003
+INT1IF                            00000000
+INT1IP                            00000006
+INT1P                             00000006
+INT2                              00000002
+INT2E                             00000004
+INT2F                             00000001
+INT2IE                            00000004
+INT2IF                            00000001
+INT2IP                            00000007
+INT2P                             00000007
+INTCON                            00000FF2
+INTCON2                           00000FF1
+INTCON3                           00000FF0
+INTEDG0                           00000006
+INTEDG1                           00000005
+INTEDG2                           00000004
+INTSRC                            00000007
+IOFS                              00000002
+IPEN                              00000007
+IPR1                              00000F9F
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 30
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+IPR2                              00000FA2
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRVST                             00000005
+IVRST                             00000005
+Increment_i_1                     0000023E
+Increment_i_2                     00000244
+Increment_i_j                     0000024A
+Jump_cont                         000001EC
+Jump_cont_2                       000001F8
+Jump_status                       00000222
+Jump_status_2                     00000234
+LATA                              00000F89
+LATA0                             00000000
+LATA1                             00000001
+LATA2                             00000002
+LATA3                             00000003
+LATA4                             00000004
+LATA5                             00000005
+LATA6                             00000006
+LATB                              00000F8A
+LATB0                             00000000
+LATB1                             00000001
+LATB2                             00000002
+LATB3                             00000003
+LATB4                             00000004
+LATB5                             00000005
+LATB6                             00000006
+LATB7                             00000007
+LATC                              00000F8B
+LATC0                             00000000
+LATC1                             00000001
+LATC2                             00000002
+LATC6                             00000006
+LATC7                             00000007
+LATD                              00000F8C
+LATD0                             00000000
+LATD1                             00000001
+LATD2                             00000002
+LATD3                             00000003
+LATD4                             00000004
+LATD5                             00000005
+LATD6                             00000006
+LATD7                             00000007
+LATE                              00000F8D
+LATE0                             00000000
+LATE1                             00000001
+LATE2                             00000002
+LOOP                              00000026
+LVDCON                            00000FD2
+LVDEN                             00000004
+LVDIE                             00000002
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 31
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LVDIF                             00000002
+LVDIN                             00000005
+LVDIP                             00000002
+LVDL0                             00000000
+LVDL1                             00000001
+LVDL2                             00000002
+LVDL3                             00000003
+LVV0                              00000000
+LVV1                              00000001
+LVV2                              00000002
+LVV3                              00000003
+MAX_RT_status                     00000346
+Mode_Tx_configuration             0000012C
+N                                 00000004
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_IPEN                          00000007
+NOT_PD                            00000002
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RI                            00000004
+NOT_T1SYNC                        00000002
+NOT_T3SYNC                        00000002
+NOT_TO                            00000003
+NOT_W                             00000002
+NOT_WRITE                         00000002
+Not_sent_message                  000000B6
+OERR                              00000001
+OESPP                             00000002
+OSC2                              00000006
+OSCCON                            00000FD3
+OSCFIE                            00000007
+OSCFIF                            00000007
+OSCFIP                            00000007
+OSCTUNE                           00000F9B
+OSTS                              00000003
+OV                                00000003
+P                                 00000004
+P1A                               00000002
+P1M0                              00000006
+P1M1                              00000007
+PC                                00000FF9
+PCFG0                             00000000
+PCFG1                             00000001
+PCFG2                             00000002
+PCFG3                             00000003
+PCL                               00000FF9
+PCLATH                            00000FFA
+PCLATU                            00000FFB
+PD                                00000002
+PDC0                              00000000
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 32
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEIE_GIEL                         00000006
+PEN                               00000002
+PGC                               00000006
+PGD                               00000007
+PGM                               00000005
+PIDEE                             00000000
+PIDEF                             00000000
+PIE1                              00000F9D
+PIE2                              00000FA0
+PIR1                              00000F9E
+PIR2                              00000FA1
+PKTDIS                            00000004
+PLUSW0                            00000FEB
+PLUSW1                            00000FE3
+PLUSW2                            00000FDB
+POR                               00000001
+PORTA                             00000F80
+PORTB                             00000F81
+PORTC                             00000F82
+PORTD                             00000F83
+PORTE                             00000F84
+POSTDEC0                          00000FED
+POSTDEC1                          00000FE5
+POSTDEC2                          00000FDD
+POSTINC0                          00000FEE
+POSTINC1                          00000FE6
+POSTINC2                          00000FDE
+PPB0                              00000000
+PPB1                              00000001
+PPBI                              00000001
+PPBRST                            00000006
+PR2                               00000FCB
+PREINC0                           00000FEC
+PREINC1                           00000FE4
+PREINC2                           00000FDC
+PROD                              00000FF3
+PRODH                             00000FF4
+PRODL                             00000FF3
+PRSEN                             00000007
+PSA                               00000003
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+R                                 00000002
+RA0                               00000000
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 33
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RBIP                              00000000
+RBPU                              00000007
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCIP                              00000005
+RCMT                              00000006
+RCON                              00000FD0
+RCREG                             00000FAE
+RCSTA                             00000FAB
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD16                              00000007
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RDPU                              00000007
+RDSPP                             00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+RESUME                            00000002
+RI                                00000004
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 34
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RSEN                              00000001
+RX                                00000007
+RX9                               00000006
+RX9D                              00000000
+RXDTP                             00000005
+R_NOT_W                           00000002
+R_W                               00000002
+Read_configuration                00000436
+Read_nRF24L01_Address_Register    00000334
+Read_status                       00000398
+Reset_configuration               000003AC
+S                                 00000003
+SBOREN                            00000006
+SCKP                              00000004
+SCS0                              00000000
+SCS1                              00000001
+SE0                               00000005
+SEN                               00000000
+SENDB                             00000003
+SMP                               00000007
+SOFIE                             00000006
+SOFIF                             00000006
+SPBRG                             00000FAF
+SPBRGH                            00000FB0
+SPEN                              00000007
+SPI_transfer                      00000472
+SPP0                              00000000
+SPP1                              00000001
+SPP2                              00000002
+SPP3                              00000003
+SPP4                              00000004
+SPP5                              00000005
+SPP6                              00000006
+SPP7                              00000007
+SPPBUSY                           00000004
+SPPCFG                            00000F63
+SPPCON                            00000F65
+SPPDATA                           00000F62
+SPPEN                             00000000
+SPPEPS                            00000F64
+SPPIE                             00000007
+SPPIF                             00000007
+SPPIP                             00000007
+SPPOWN                            00000001
+SREN                              00000005
+SSPADD                            00000FC8
+SSPBUF                            00000FC9
+SSPCON1                           00000FC6
+SSPCON2                           00000FC5
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPIP                             00000003
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 35
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000FC7
+STALLIE                           00000005
+STALLIF                           00000005
+STATUS                            00000FD8
+STKFUL                            00000007
+STKOVF                            00000007
+STKPTR                            00000FFC
+STKPTR0                           00000000
+STKPTR1                           00000001
+STKPTR2                           00000002
+STKPTR3                           00000003
+STKPTR4                           00000004
+STKUNF                            00000006
+SUSPND                            00000001
+SWDTE                             00000000
+SWDTEN                            00000000
+SYNC                              00000004
+Send_Data_TX_Mode_nRF24L01        0000026A
+Send_part_high                    00000076
+Send_part_low                     00000084
+Sent_message                      000000A6
+Start                             00000004
+Start_SPI                         000000D8
+T08BIT                            00000006
+T0CKI                             00000004
+T0CON                             00000FD5
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0IP                              00000002
+T0PS0                             00000000
+T0PS1                             00000001
+T0PS2                             00000002
+T0SE                              00000004
+T13CKI                            00000000
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000FCD
+T1OSCEN                           00000003
+T1OSI                             00000001
+T1OSO                             00000000
+T1RUN                             00000006
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000FCA
+T2OUTPS0                          00000003
+T2OUTPS1                          00000004
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 36
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T2OUTPS2                          00000005
+T2OUTPS3                          00000006
+T3CCP1                            00000003
+T3CCP2                            00000006
+T3CKPS0                           00000004
+T3CKPS1                           00000005
+T3CON                             00000FB1
+T3NSYNC                           00000002
+T3SYNC                            00000002
+TABLAT                            00000FF5
+TBLPTR                            00000FF6
+TBLPTRH                           00000FF7
+TBLPTRL                           00000FF6
+TBLPTRU                           00000FF8
+TMR0                              00000FD6
+TMR0H                             00000FD7
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0IP                            00000002
+TMR0L                             00000FD6
+TMR0ON                            00000007
+TMR1                              00000FCE
+TMR1CS                            00000001
+TMR1H                             00000FCF
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1IP                            00000000
+TMR1L                             00000FCE
+TMR1ON                            00000000
+TMR2                              00000FCC
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2IP                            00000001
+TMR2ON                            00000002
+TMR3                              00000FB2
+TMR3CS                            00000001
+TMR3H                             00000FB3
+TMR3IE                            00000001
+TMR3IF                            00000001
+TMR3IP                            00000001
+TMR3L                             00000FB2
+TMR3ON                            00000000
+TO                                00000003
+TOS                               00000FFD
+TOSH                              00000FFE
+TOSL                              00000FFD
+TOSU                              00000FFF
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000F92
+TRISA0                            00000000
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 37
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISB                             00000F93
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000F94
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000F95
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000F96
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRMT                              00000001
+TRNIE                             00000003
+TRNIF                             00000003
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX                                00000006
+TX9                               00000006
+TX9D                              00000000
+TXCKP                             00000004
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXIP                              00000004
+TXREG                             00000FAD
+TXSTA                             00000FAC
+TX_DS_status                      0000036C
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 38
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+UA                                00000001
+UADDR                             00000F6E
+UCFG                              00000F6F
+UCON                              00000F6D
+UEIE                              00000F6B
+UEIR                              00000F6A
+UEP0                              00000F70
+UEP1                              00000F71
+UEP10                             00000F7A
+UEP11                             00000F7B
+UEP12                             00000F7C
+UEP13                             00000F7D
+UEP14                             00000F7E
+UEP15                             00000F7F
+UEP2                              00000F72
+UEP3                              00000F73
+UEP4                              00000F74
+UEP5                              00000F75
+UEP6                              00000F76
+UEP7                              00000F77
+UEP8                              00000F78
+UEP9                              00000F79
+UERRIE                            00000001
+UERRIF                            00000001
+UFRM                              00000F66
+UFRMH                             00000F67
+UFRML                             00000F66
+UIE                               00000F69
+UIR                               00000F68
+UOEMON                            00000006
+UPUEN                             00000004
+URSTIE                            00000000
+URSTIF                            00000000
+USBEN                             00000003
+USBIE                             00000005
+USBIF                             00000005
+USBIP                             00000005
+USTAT                             00000F6C
+UTEYE                             00000007
+UTRDIS                            00000003
+VCFG0                             00000004
+VCFG1                             00000005
+VDIRMAG                           00000007
+VREFM                             00000002
+VREFP                             00000003
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000FD1
+WR                                00000001
+WREG                              00000FE8
+WREN                              00000002
+WRERR                             00000003
+WRSPP                             00000006
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 39
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WS0                               00000000
+WS1                               00000001
+WS2                               00000002
+WS3                               00000003
+WUE                               00000001
+Wait_IRQ_LOW                      000001E0
+Wait_TX_DS_or_MAX_RT              0000020C
+Wait_delay_min                    00000488
+Wait_transfer                     00000476
+Wait_transfer_write               00000414
+Wait_write_address                000002E0
+Write_configuration               000003F2
+Write_nrf_Address_Register        000002DE
+Write_nrf_TX_Payload              0000029E
+Write_status                      00000458
+Z                                 00000002
+_BORV_0_2L                        000000E7
+_BORV_1_2L                        000000EF
+_BORV_2_2L                        000000F7
+_BORV_3_2L                        000000FF
+_BOR_OFF_2L                       000000F9
+_BOR_ON_2L                        000000FF
+_BOR_ON_ACTIVE_2L                 000000FD
+_BOR_SOFT_2L                      000000FB
+_CCP2MX_OFF_3H                    000000FE
+_CCP2MX_ON_3H                     000000FF
+_CONFIG1H                         00300001
+_CONFIG1L                         00300000
+_CONFIG2H                         00300003
+_CONFIG2L                         00300002
+_CONFIG3H                         00300005
+_CONFIG4L                         00300006
+_CONFIG5H                         00300009
+_CONFIG5L                         00300008
+_CONFIG6H                         0030000B
+_CONFIG6L                         0030000A
+_CONFIG7H                         0030000D
+_CONFIG7L                         0030000C
+_CP0_OFF_5L                       000000FF
+_CP0_ON_5L                        000000FE
+_CP1_OFF_5L                       000000FF
+_CP1_ON_5L                        000000FD
+_CP2_OFF_5L                       000000FF
+_CP2_ON_5L                        000000FB
+_CP3_OFF_5L                       000000FF
+_CP3_ON_5L                        000000F7
+_CPB_OFF_5H                       000000FF
+_CPB_ON_5H                        000000BF
+_CPD_OFF_5H                       000000FF
+_CPD_ON_5H                        0000007F
+_CPUDIV_OSC1_PLL2_1L              000000E7
+_CPUDIV_OSC2_PLL3_1L              000000EF
+_CPUDIV_OSC3_PLL4_1L              000000F7
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 40
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_CPUDIV_OSC4_PLL6_1L              000000FF
+_DEBUG_OFF_4L                     000000FF
+_DEBUG_ON_4L                      0000007F
+_DEVID1                           003FFFFE
+_DEVID2                           003FFFFF
+_EBTR0_OFF_7L                     000000FF
+_EBTR0_ON_7L                      000000FE
+_EBTR1_OFF_7L                     000000FF
+_EBTR1_ON_7L                      000000FD
+_EBTR2_OFF_7L                     000000FF
+_EBTR2_ON_7L                      000000FB
+_EBTR3_OFF_7L                     000000FF
+_EBTR3_ON_7L                      000000F7
+_EBTRB_OFF_7H                     000000FF
+_EBTRB_ON_7H                      000000BF
+_FCMEN_OFF_1H                     000000BF
+_FCMEN_ON_1H                      000000FF
+_FOSC_ECIO_EC_1H                  000000F4
+_FOSC_ECPLLIO_EC_1H               000000F6
+_FOSC_ECPLL_EC_1H                 000000F7
+_FOSC_EC_EC_1H                    000000F5
+_FOSC_HSPLL_HS_1H                 000000FE
+_FOSC_HS_1H                       000000FC
+_FOSC_INTOSCIO_EC_1H              000000F8
+_FOSC_INTOSC_EC_1H                000000F9
+_FOSC_INTOSC_HS_1H                000000FB
+_FOSC_INTOSC_XT_1H                000000FA
+_FOSC_XTPLL_XT_1H                 000000F2
+_FOSC_XT_XT_1H                    000000F0
+_ICPRT_OFF_4L                     000000DF
+_ICPRT_ON_4L                      000000FF
+_IDLOC0                           00200000
+_IDLOC1                           00200001
+_IDLOC2                           00200002
+_IDLOC3                           00200003
+_IDLOC4                           00200004
+_IDLOC5                           00200005
+_IDLOC6                           00200006
+_IDLOC7                           00200007
+_IESO_OFF_1H                      0000007F
+_IESO_ON_1H                       000000FF
+_LPT1OSC_OFF_3H                   000000FB
+_LPT1OSC_ON_3H                    000000FF
+_LVP_OFF_4L                       000000FB
+_LVP_ON_4L                        000000FF
+_MCLRE_OFF_3H                     0000007F
+_MCLRE_ON_3H                      000000FF
+_PBADEN_OFF_3H                    000000FD
+_PBADEN_ON_3H                     000000FF
+_PLLDIV_10_1L                     000000FE
+_PLLDIV_12_1L                     000000FF
+_PLLDIV_1_1L                      000000F8
+_PLLDIV_2_1L                      000000F9
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 41
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_PLLDIV_3_1L                      000000FA
+_PLLDIV_4_1L                      000000FB
+_PLLDIV_5_1L                      000000FC
+_PLLDIV_6_1L                      000000FD
+_PWRT_OFF_2L                      000000FF
+_PWRT_ON_2L                       000000FE
+_STVREN_OFF_4L                    000000FE
+_STVREN_ON_4L                     000000FF
+_USBDIV_1_1L                      000000DF
+_USBDIV_2_1L                      000000FF
+_VREGEN_OFF_2L                    000000DF
+_VREGEN_ON_2L                     000000FF
+_WDTPS_1024_2H                    000000F5
+_WDTPS_128_2H                     000000EF
+_WDTPS_16384_2H                   000000FD
+_WDTPS_16_2H                      000000E9
+_WDTPS_1_2H                       000000E1
+_WDTPS_2048_2H                    000000F7
+_WDTPS_256_2H                     000000F1
+_WDTPS_2_2H                       000000E3
+_WDTPS_32768_2H                   000000FF
+_WDTPS_32_2H                      000000EB
+_WDTPS_4096_2H                    000000F9
+_WDTPS_4_2H                       000000E5
+_WDTPS_512_2H                     000000F3
+_WDTPS_64_2H                      000000ED
+_WDTPS_8192_2H                    000000FB
+_WDTPS_8_2H                       000000E7
+_WDT_OFF_2H                       000000FE
+_WDT_ON_2H                        000000FF
+_WRT0_OFF_6L                      000000FF
+_WRT0_ON_6L                       000000FE
+_WRT1_OFF_6L                      000000FF
+_WRT1_ON_6L                       000000FD
+_WRT2_OFF_6L                      000000FF
+_WRT2_ON_6L                       000000FB
+_WRT3_OFF_6L                      000000FF
+_WRT3_ON_6L                       000000F7
+_WRTB_OFF_6H                      000000FF
+_WRTB_ON_6H                       000000BF
+_WRTC_OFF_6H                      000000FF
+_WRTC_ON_6H                       000000DF
+_WRTD_OFF_6H                      000000FF
+_WRTD_ON_6H                       0000007F
+_XINST_OFF_4L                     000000BF
+_XINST_ON_4L                      000000FF
+__18F4550                         00000001
+contador_i                        00000009
+contador_j                        0000000B
+contador_tx                       00000014
+data_configuration_A              00000005
+data_configuration_C              00000004
+data_content                      00000006
+MPASM 5.77               TRANSMISION_NRF.ASM   6-12-2020  13:43:48         PAGE 42
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+data_status                       00000003
+data_to_send                      00000000
+delay_min_tx                      00000001
+delay_modo_tx                     00000002
+enable_checksum                   00000011
+message                           00000013
+message_send_rx                   00000042
+message_to_send                   00000012
+process_finished                  0000000F
+read_status_config                0000000D
+register_address                  00000010
+result_operation_tx               0000000C
+save_data                         00000007
+save_data_read                    00000008
+trans_tx                          0000000E
+
+Errors   :     0
+Warnings :    21 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+

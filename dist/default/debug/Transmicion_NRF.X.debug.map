@@ -1,0 +1,161 @@
+MPLINK 5.08, LINKER
+Linker Map File - Created Sun Jun 07 15:22:05 2020
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                    .code       code   0x000000    program   0x000438
+                   .cinit    romdata   0x000438    program   0x000002
+               .udata_acs      udata   0x000000       data   0x000014
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000439      
+            1082 out of 33048 program addresses used, program memory utilization is 3%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+            Checksum_fail   0x000262    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Checksum_no_fail   0x000270    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Configuration_port   0x0000a8    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Delay_min   0x00042e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Error_IRQ   0x000206    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           Error_NRF24L01   0x000070    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               Exit_write   0x0002dc    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Fail_NRF24L01   0x000042    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Fail_message   0x000036    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                   Finish   0x00004e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          Finish_checksum   0x00025e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Finish_operation   0x0000ba    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Finish_status   0x0001e6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                  Get_IRQ   0x0001ae    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Get_Mode_Tx   0x000178    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_1   0x0001e8    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_2   0x0001ee    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_j   0x0001f4    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Jump_cont   0x000196    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Jump_cont_2   0x0001a2    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Jump_status   0x0001cc    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Jump_status_2   0x0001de    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                     LOOP   0x000008    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            MAX_RT_status   0x0002f0    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+    Mode_Tx_configuration   0x0000d6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Not_sent_message   0x000060    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Read_configuration   0x0003e0    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Read_nRF24L01_Address_Register   0x0002de    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Read_status   0x000342    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Reset_configuration   0x000356    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             SPI_transfer   0x00041c    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Send_Data_TX_Mode_nRF24L01   0x000214    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Sent_message   0x000050    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                    Start   0x000004    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Start_SPI   0x000082    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             TX_DS_status   0x000316    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Wait_IRQ_LOW   0x00018a    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     Wait_TX_DS_or_MAX_RT   0x0001b6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           Wait_delay_min   0x000432    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Wait_transfer   0x000420    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Wait_transfer_write   0x0003be    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Wait_write_address   0x00028a    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Write_configuration   0x00039c    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Write_nrf_Address_Register   0x000288    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     Write_nrf_TX_Payload   0x000248    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Write_status   0x000402    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               contador_i   0x000009       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               contador_j   0x00000b       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     data_configuration_A   0x000005       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     data_configuration_C   0x000004       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             data_content   0x000006       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              data_status   0x000003       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             data_to_send   0x000000       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             delay_min_tx   0x000001       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            delay_modo_tx   0x000002       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          enable_checksum   0x000011       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                  message   0x000013       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          message_to_send   0x000012       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         process_finished   0x00000f       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       read_status_config   0x00000d       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         register_address   0x000010       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      result_operation_tx   0x00000c       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                save_data   0x000007       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           save_data_read   0x000008       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                 trans_tx   0x00000e       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                    Start   0x000004    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                     LOOP   0x000008    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Fail_message   0x000036    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Fail_NRF24L01   0x000042    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                   Finish   0x00004e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Sent_message   0x000050    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Not_sent_message   0x000060    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           Error_NRF24L01   0x000070    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Start_SPI   0x000082    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Configuration_port   0x0000a8    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Finish_operation   0x0000ba    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+    Mode_Tx_configuration   0x0000d6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Get_Mode_Tx   0x000178    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Wait_IRQ_LOW   0x00018a    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Jump_cont   0x000196    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Jump_cont_2   0x0001a2    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                  Get_IRQ   0x0001ae    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     Wait_TX_DS_or_MAX_RT   0x0001b6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Jump_status   0x0001cc    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Jump_status_2   0x0001de    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Finish_status   0x0001e6    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_1   0x0001e8    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_2   0x0001ee    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Increment_i_j   0x0001f4    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Error_IRQ   0x000206    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Send_Data_TX_Mode_nRF24L01   0x000214    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     Write_nrf_TX_Payload   0x000248    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          Finish_checksum   0x00025e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Checksum_fail   0x000262    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         Checksum_no_fail   0x000270    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Write_nrf_Address_Register   0x000288    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Wait_write_address   0x00028a    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               Exit_write   0x0002dc    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+Read_nRF24L01_Address_Register   0x0002de    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            MAX_RT_status   0x0002f0    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             TX_DS_status   0x000316    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              Read_status   0x000342    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Reset_configuration   0x000356    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Write_configuration   0x00039c    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      Wait_transfer_write   0x0003be    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       Read_configuration   0x0003e0    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             Write_status   0x000402    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             SPI_transfer   0x00041c    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            Wait_transfer   0x000420    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                Delay_min   0x00042e    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           Wait_delay_min   0x000432    program     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             data_to_send   0x000000       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             delay_min_tx   0x000001       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+            delay_modo_tx   0x000002       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+              data_status   0x000003       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     data_configuration_C   0x000004       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+     data_configuration_A   0x000005       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+             data_content   0x000006       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                save_data   0x000007       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+           save_data_read   0x000008       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               contador_i   0x000009       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+               contador_j   0x00000b       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+      result_operation_tx   0x00000c       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+       read_status_config   0x00000d       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                 trans_tx   0x00000e       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         process_finished   0x00000f       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+         register_address   0x000010       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          enable_checksum   0x000011       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+          message_to_send   0x000012       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+                  message   0x000013       data     static C:\Users\1090168441\MPLABXProjects\Transmicion_NRF.X\Transmision_NRF.asm
+
+
